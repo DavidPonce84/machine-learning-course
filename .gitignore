@@ -1,0 +1,21 @@
+# Ignorar carpetas de referencia y soluciones de profesor
+*soluciones/
+*presentaciones/
+curso-eda-referencia/
+plantillas/
+lineamientos/
+
+# Ignorar guías metodológicas de profesor
+*guia_docente.md
+
+# Ignorar formatos de manuales y scripts auxiliares
+*.docx
+*.pptx
+*.py
+*.pdf
+
+# Ignorar archivos del sistema
+.DS_Store
+.tempmediaStorage/
+__pycache__/
+*.pyc
