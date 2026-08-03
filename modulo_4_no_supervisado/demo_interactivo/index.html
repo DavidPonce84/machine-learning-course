@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Interactivo de Aprendizaje No Supervisado | SLB Machine Learning</title>
+    <meta name="description" content="Simulador e instructor interactivo de algoritmos no supervisados (K-Means, StandardScaler, DBSCAN y Método del Codo) aplicados a pozos petroleros.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-hover: #1f2937;
+            --border-color: #1f2937;
+            --accent-cyan: #38bdf8;
+            --accent-green: #34d399;
+            --accent-yellow: #fbbf24;
+            --accent-rose: #f43f5e;
+            --accent-purple: #a855f7;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Tabs Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(17, 24, 39, 0.8);
+            padding: 0.35rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.2rem;
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-cyan);
+            color: #090d16;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Main Container */
+        main {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .section-pane {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .section-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Layout Grids */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Glassmorphic Panel */
+        .panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Form Controls */
+        .control-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .control-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .control-value {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #1f2937;
+            border-radius: 3px;
+            outline: none;
+            accent-color: var(--accent-cyan);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            font-family: var(--font-body);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #0284c7);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
+        }
+
+        .btn-secondary {
+            background: #1f2937;
+            color: var(--text-main);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: #374151;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), #059669);
+            color: #000;
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            position: relative;
+            background: #090d16;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+            background: transparent;
+            cursor: crosshair;
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85rem;
+        }
+
+        /* Petroleum Cluster Cards */
+        .cluster-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .cluster-card {
+            background: rgba(17, 24, 39, 0.6);
+            border-radius: 12px;
+            padding: 1rem;
+            border-left: 4px solid var(--border-color);
+        }
+
+        .cluster-card.c0 { border-left-color: var(--accent-green); }
+        .cluster-card.c1 { border-left-color: var(--accent-yellow); }
+        .cluster-card.c2 { border-left-color: var(--accent-rose); }
+
+        .cluster-card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .cluster-card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Explanatory Banner */
+        .info-banner {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 14px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .info-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+
+        .info-content h3 {
+            font-family: var(--font-heading);
+            font-size: 1.05rem;
+            color: var(--accent-cyan);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-content p {
+            font-size: 0.88rem;
+            color: var(--text-main);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .cluster-cards {
+                grid-template-columns: 1fr;
+            }
+            header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <div class="brand-logo">🛢️</div>
+            <div>
+                <div class="brand-title">SLB Machine Learning Lab</div>
+                <div class="brand-subtitle">Simulador Interactivo de Aprendizaje No Supervisado</div>
+            </div>
+        </div>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('kmeans')">🎯 K-Means Animado</button>
+            <button class="tab-btn" onclick="switchTab('scaling')">⚖️ Efecto StandardScaler</button>
+            <button class="tab-btn" onclick="switchTab('dbscan')">🌀 K-Means vs DBSCAN</button>
+            <button class="tab-btn" onclick="switchTab('elbow')">📈 Método del Codo</button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- TAB 1: K-Means Animado -->
+        <section id="tab-kmeans" class="section-pane active">
+            <div class="info-banner">
+                <div class="info-icon">💡</div>
+                <div class="info-content">
+                    <h3>¿Cómo funciona K-Means paso a paso?</h3>
+                    <p>Observa cómo los centroides (estrellas glowing) iteran automáticamente entre dos pasos clave: <strong>1) Asignar pozos al centroide más cercano</strong> y <strong>2) Recalcular la posición del centroide (Media)</strong> hasta alcanzar la convergencia.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Panel de Control -->
+                <div class="panel">
+                    <div class="panel-title">🎛️ Controles del Modelo</div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Número de Clusters (K):</span>
+                            <span id="k-val" class="control-value">3</span>
+                        </div>
+                        <input type="range" id="k-slider" min="2" max="6" value="3" oninput="updateK(this.value)">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Velocidad de Animación:</span>
+                            <span id="speed-val" class="control-value">Normal</span>
+                        </div>
+                        <input type="range" id="speed-slider" min="200" max="1500" value="700" step="100">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="toggleAutoPlay()" id="btn-play">
+                        ▶️ Reproducir Animación
+                    </button>
+                    <button class="btn btn-secondary" onclick="stepKMeans()">
+                        ⏭️ Siguiente Paso (Iteración)
+                    </button>
+                    <button class="btn btn-secondary" onclick="resetKMeans()">
+                        🔄 Reiniciar Centroides
+                    </button>
+                    <button class="btn btn-secondary" onclick="generateRandomWells()">
+                        🎲 Generar Nuevos Pozos
+                    </button>
+
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Estado de Convergencia:</div>
+                        <div id="status-badge" style="font-size: 0.95rem; font-weight: 700; color: var(--accent-yellow);">
+                            ⏸️ En Espera de Inicio
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div>
+                    <div class="canvas-container">
+                        <canvas id="kmeans-canvas" width="850" height="500"></canvas>
+                        <div class="canvas-overlay">
+                            <div>Iteración: <strong id="iter-count" style="color: var(--accent-cyan);">0</strong></div>
+                            <div>Inercia (Distorsión): <strong id="inertia-val" style="color: var(--accent-green);">0.00</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Perfiles de Yacimientos Resultantes -->
+                    <div class="cluster-cards">
+                        <div class="cluster-card c0">
+                            <div class="cluster-card-title" style="color: var(--accent-green);">🟢 Cluster 0: Alto Rendimiento</div>
+                            <div class="cluster-card-desc">Pozos con alto caudal de petróleo (Qo > 1800 bpd), presiones saludables y corte de agua mínimo (< 15%).</div>
+                        </div>
+                        <div class="cluster-card c1">
+                            <div class="cluster-card-title" style="color: var(--accent-yellow);">🟡 Cluster 1: Conificación de Agua</div>
+                            <div class="cluster-card-desc">Pozos maduros con severo avance de acuífero (Water Cut > 60%). Requieren aislamiento o empacadores.</div>
+                        </div>
+                        <div class="cluster-card c2">
+                            <div class="cluster-card-title" style="color: var(--accent-rose);">🔴 Cluster 2: Pozos Declinados</div>
+                            <div class="cluster-card-desc">Baja presión de fondo (BHP) y baja producción. Candidatos a Levantamiento Artificial (ESP / Gas Lift).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Efecto StandardScaler -->
+        <section id="tab-scaling" class="section-pane">
+            <div class="info-banner">
+                <div class="info-icon">⚖️</div>
+                <div class="info-content">
+                    <h3>¿Por qué es obligatorio usar StandardScaler antes de agrupar?</h3>
+                    <p>Compara el cálculo de distancia Euclídea <strong>Sin Escalado (Raw Units)</strong> vs <strong>Con Escalado (Z-Score)</strong>. Sin estandarizar, la escala de 2,500 bpd aplasta al 0.85 de corte de agua haciendo que la matemática ignore el comportamiento del agua.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-title">⚖️ Modo de Distancia</div>
+                    
+                    <div class="control-group">
+                        <label class="control-label">Selecciona el espacio geométrico:</label>
+                        <button class="btn btn-secondary active" id="btn-unscaled" onclick="setScalingMode(false)">
+                            ❌ Sin Escalado (Raw: bpd vs 0-1)
+                        </button>
+                        <button class="btn btn-success" id="btn-scaled" onclick="setScalingMode(true)">
+                            ✅ Con StandardScaler (Z-Score μ=0, σ=1)
+                        </button>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 10px; font-size: 0.85rem;">
+                        <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.5rem;">Fórmula Z-Score:</div>
+                        <code>Z = (X - μ) / σ</code>
+                        <p style="color: var(--text-muted); margin-top: 0.5rem;">Valores positivos representan pozos sobre la media; valores negativos representan pozos bajo la media del campo.</p>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="scaling-canvas" width="850" height="500"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: K-Means vs DBSCAN -->
+        <section id="tab-dbscan" class="section-pane">
+            <div class="info-banner">
+                <div class="info-icon">🌀</div>
+                <div class="info-content">
+                    <h3>Geometría de los Datos: ¿Cuándo falla K-Means y por qué necesitamos DBSCAN?</h3>
+                    <p>K-Means asume clusters esféricos/circulares y asigna TODOS los pozos a algún cluster. <strong>DBSCAN</strong> agrupa por <strong>densidad de pozos</strong> (Eps y MinPts), identificando zonas complejas no esféricas y aislando <strong>outliers / pozos ruidosos</strong> (puntos grises con X roja).</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-title">🌀 Parámetros de DBSCAN</div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Radio Épsilon (Eps):</span>
+                            <span id="eps-val" class="control-value">35</span>
+                        </div>
+                        <input type="range" id="eps-slider" min="15" max="80" value="35" oninput="runDBSCAN()">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span>Mínimo de Pozos (MinPts):</span>
+                            <span id="minpts-val" class="control-value">4</span>
+                        </div>
+                        <input type="range" id="minpts-slider" min="2" max="10" value="4" oninput="runDBSCAN()">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Forma geométrica del campo:</label>
+                        <button class="btn btn-secondary" onclick="loadDataset('rings')">⭕ Anillo y Núcleo Irregular</button>
+                        <button class="btn btn-secondary" onclick="loadDataset('moons')">🌙 Formas de Luna / Canal</button>
+                        <button class="btn btn-secondary" onclick="loadDataset('wells')">🛢️ Pozos Reales con Outliers</button>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="dbscan-canvas" width="850" height="500"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: Método del Codo Interactivo -->
+        <section id="tab-elbow" class="section-pane">
+            <div class="info-banner">
+                <div class="info-icon">📈</div>
+                <div class="info-content">
+                    <h3>Curva de Inercia (Distortion Score Elbow)</h3>
+                    <p>Visualiza el gráfico de Yellowbrick generado dinámicamente. Muestra la caída drástica de la Inercia (suma de distancias cuadráticas) y marca el <strong>Punto del Codo en K=3</strong> donde se alcanza el rendimiento decreciente.</p>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <div class="panel-title">📊 Diagnóstico Visual</div>
+                    <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        A medida que incrementas K, la inercia disminuye. El punto de inflexión o "codo" es el número óptimo de familias de pozos sin sobreajustar.
+                    </p>
+                    <div style="background: rgba(0,0,0,0.5); padding: 1rem; border-radius: 10px; border-left: 3px solid var(--accent-yellow);">
+                        <strong style="color: var(--accent-yellow);">Sugerencia Kneedle:</strong>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #fff; margin-top: 0.3rem;">Elbow at K = 3</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Inercia Óptima = 7.140</div>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="elbow-canvas" width="850" height="500"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>Desarrollado para la Capacitación de Machine Learning Aplicado a la Industria Petrolera (SLB / SLB Training)</p>
+        <p style="margin-top: 0.4rem; color: var(--accent-cyan);">Modulo 4 · Aprendizaje No Supervisado · Clustering K-Means & DBSCAN</p>
+    </footer>
+
+    <!-- JS Logic -->
+    <script>
+        const COLORS = ['#34d399', '#fbbf24', '#f43f5e', '#38bdf8', '#a855f7', '#ec4899'];
+        
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.section-pane').forEach(pane => pane.classList.remove('active'));
+            
+            event.currentTarget.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if(tabId === 'elbow') renderElbowChart();
+            if(tabId === 'scaling') renderScalingCanvas();
+            if(tabId === 'dbscan') runDBSCAN();
+        }
+
+        // --- TAB 1: K-MEANS SIMULATOR ---
+        const kmCanvas = document.getElementById('kmeans-canvas');
+        const kmCtx = kmCanvas.getContext('2d');
+
+        let points = [];
+        let centroids = [];
+        let assignments = [];
+        let K = 3;
+        let iteration = 0;
+        let isConverged = false;
+        let autoPlayTimer = null;
+
+        function initWells() {
+            points = [];
+            for(let i=0; i<20; i++) {
+                points.push({
+                    x: 600 + Math.random()*180 + (Math.random()-0.5)*40,
+                    y: 380 + Math.random()*60 + (Math.random()-0.5)*30,
+                    name: `Pozo-${i+1}`
+                });
+            }
+            for(let i=20; i<35; i++) {
+                points.push({
+                    x: 120 + Math.random()*150,
+                    y: 90 + Math.random()*100,
+                    name: `Pozo-${i+1}`
+                });
+            }
+            for(let i=35; i<50; i++) {
+                points.push({
+                    x: 100 + Math.random()*140,
+                    y: 300 + Math.random()*120,
+                    name: `Pozo-${i+1}`
+                });
+            }
+
+            resetKMeans();
+        }
+
+        function resetKMeans() {
+            iteration = 0;
+            isConverged = false;
+            stopAutoPlay();
+            document.getElementById('status-badge').innerHTML = '⏸️ Listo para iniciar';
+            document.getElementById('status-badge').style.color = 'var(--accent-yellow)';
+            
+            centroids = [];
+            for(let k=0; k<K; k++) {
+                const randPt = points[Math.floor(Math.random() * points.length)];
+                centroids.push({ x: randPt.x + (Math.random()-0.5)*60, y: randPt.y + (Math.random()-0.5)*60 });
+            }
+            assignments = new Array(points.length).fill(-1);
+            drawKMeans();
+            updateMetrics();
+        }
+
+        function updateK(val) {
+            K = parseInt(val);
+            document.getElementById('k-val').innerText = K;
+            resetKMeans();
+        }
+
+        function stepKMeans() {
+            if(isConverged) return;
+
+            let moved = false;
+            let newAssignments = [];
+            for(let i=0; i<points.length; i++) {
+                let minDist = Infinity;
+                let closest = 0;
+                for(let k=0; k<K; k++) {
+                    let d = Math.hypot(points[i].x - centroids[k].x, points[i].y - centroids[k].y);
+                    if(d < minDist) {
+                        minDist = d;
+                        closest = k;
+                    }
+                }
+                newAssignments.push(closest);
+            }
+
+            for(let i=0; i<points.length; i++) {
+                if(newAssignments[i] !== assignments[i]) moved = true;
+            }
+            assignments = newAssignments;
+
+            for(let k=0; k<K; k++) {
+                let clusterPts = points.filter((_, idx) => assignments[idx] === k);
+                if(clusterPts.length > 0) {
+                    let meanX = clusterPts.reduce((sum, p) => sum + p.x, 0) / clusterPts.length;
+                    let meanY = clusterPts.reduce((sum, p) => sum + p.y, 0) / clusterPts.length;
+                    
+                    if(Math.hypot(centroids[k].x - meanX, centroids[k].y - meanY) > 0.5) {
+                        moved = true;
+                    }
+                    centroids[k].x = meanX;
+                    centroids[k].y = meanY;
+                }
+            }
+
+            iteration++;
+            if(!moved && iteration > 1) {
+                isConverged = true;
+                stopAutoPlay();
+                document.getElementById('status-badge').innerHTML = '✅ Modelo Convergido';
+                document.getElementById('status-badge').style.color = 'var(--accent-green)';
+            } else {
+                document.getElementById('status-badge').innerHTML = '🔄 Iterando centroides...';
+                document.getElementById('status-badge').style.color = 'var(--accent-cyan)';
+            }
+
+            drawKMeans();
+            updateMetrics();
+        }
+
+        function drawKMeans() {
+            kmCtx.clearRect(0, 0, kmCanvas.width, kmCanvas.height);
+
+            kmCtx.strokeStyle = '#1e293b';
+            kmCtx.lineWidth = 1;
+            for(let x=0; x<kmCanvas.width; x+=50) {
+                kmCtx.beginPath(); kmCtx.moveTo(x, 0); kmCtx.lineTo(x, kmCanvas.height); kmCtx.stroke();
+            }
+            for(let y=0; y<kmCanvas.height; y+=50) {
+                kmCtx.beginPath(); kmCtx.moveTo(0, y); kmCtx.lineTo(kmCanvas.width, y); kmCtx.stroke();
+            }
+
+            kmCtx.fillStyle = '#64748b';
+            kmCtx.font = '12px Inter';
+            kmCtx.fillText('Caudal de Crudo Qo (bpd) →', kmCanvas.width - 180, kmCanvas.height - 15);
+            kmCtx.save();
+            kmCtx.translate(20, 180);
+            kmCtx.rotate(-Math.PI/2);
+            kmCtx.fillText('← Corte de Agua Water Cut', 0, 0);
+            kmCtx.restore();
+
+            points.forEach((p, i) => {
+                let k = assignments[i];
+                if(k !== -1) {
+                    kmCtx.strokeStyle = COLORS[k % COLORS.length] + '33';
+                    kmCtx.beginPath();
+                    kmCtx.moveTo(p.x, p.y);
+                    kmCtx.lineTo(centroids[k].x, centroids[k].y);
+                    kmCtx.stroke();
+                }
+            });
+
+            points.forEach((p, i) => {
+                let k = assignments[i];
+                kmCtx.fillStyle = k === -1 ? '#94a3b8' : COLORS[k % COLORS.length];
+                kmCtx.beginPath();
+                kmCtx.arc(p.x, p.y, 6, 0, Math.PI*2);
+                kmCtx.fill();
+                kmCtx.strokeStyle = '#090d16';
+                kmCtx.lineWidth = 1.5;
+                kmCtx.stroke();
+            });
+
+            centroids.forEach((c, k) => {
+                kmCtx.shadowColor = COLORS[k % COLORS.length];
+                kmCtx.shadowBlur = 15;
+                kmCtx.fillStyle = COLORS[k % COLORS.length];
+                
+                kmCtx.beginPath();
+                kmCtx.arc(c.x, c.y, 12, 0, Math.PI*2);
+                kmCtx.fill();
+                kmCtx.strokeStyle = '#ffffff';
+                kmCtx.lineWidth = 3;
+                kmCtx.stroke();
+
+                kmCtx.shadowBlur = 0;
+            });
+        }
+
+        function updateMetrics() {
+            document.getElementById('iter-count').innerText = iteration;
+            
+            let inertia = 0;
+            points.forEach((p, i) => {
+                let k = assignments[i];
+                if(k !== -1) {
+                    inertia += Math.pow(p.x - centroids[k].x, 2) + Math.pow(p.y - centroids[k].y, 2);
+                }
+            });
+            document.getElementById('inertia-val').innerText = (inertia / 1000).toFixed(2);
+        }
+
+        function toggleAutoPlay() {
+            if(autoPlayTimer) {
+                stopAutoPlay();
+            } else {
+                if(isConverged) resetKMeans();
+                let speed = parseInt(document.getElementById('speed-slider').value);
+                autoPlayTimer = setInterval(stepKMeans, speed);
+                document.getElementById('btn-play').innerText = '⏸️ Pausar Animación';
+                document.getElementById('btn-play').classList.replace('btn-primary', 'btn-secondary');
+            }
+        }
+
+        function stopAutoPlay() {
+            if(autoPlayTimer) {
+                clearInterval(autoPlayTimer);
+                autoPlayTimer = null;
+                document.getElementById('btn-play').innerText = '▶️ Reproducir Animación';
+                document.getElementById('btn-play').classList.replace('btn-secondary', 'btn-primary');
+            }
+        }
+
+        function generateRandomWells() {
+            initWells();
+        }
+
+        // --- TAB 2: SCALING DEMO ---
+        let isScaledMode = false;
+        function setScalingMode(scaled) {
+            isScaledMode = scaled;
+            document.getElementById('btn-unscaled').classList.toggle('active', !scaled);
+            document.getElementById('btn-scaled').classList.toggle('active', scaled);
+            renderScalingCanvas();
+        }
+
+        function renderScalingCanvas() {
+            const scCanvas = document.getElementById('scaling-canvas');
+            const ctx = scCanvas.getContext('2d');
+            ctx.clearRect(0, 0, scCanvas.width, scCanvas.height);
+
+            ctx.strokeStyle = '#1e293b';
+            for(let x=0; x<scCanvas.width; x+=50) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x, scCanvas.height); ctx.stroke(); }
+            for(let y=0; y<scCanvas.height; y+=50) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(scCanvas.width, y); ctx.stroke(); }
+
+            ctx.font = '14px Outfit';
+            ctx.fillStyle = isScaledMode ? '#34d399' : '#f43f5e';
+            ctx.fillText(isScaledMode ? '✅ Espacio Estandarizado con StandardScaler (Z-Score)' : '❌ Espacio Sin Escalado (Raw: 2500 bpd vs 0.85)', 30, 40);
+
+            points.forEach((p, i) => {
+                let px = p.x;
+                let py = p.y;
+
+                if(!isScaledMode) {
+                    py = 100 + (p.y - 100) * 0.15;
+                }
+
+                ctx.fillStyle = COLORS[i % 3];
+                ctx.beginPath();
+                ctx.arc(px, py, 6, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            let pA = points[0];
+            let pB = points[22];
+            let pyA = isScaledMode ? pA.y : 100 + (pA.y - 100) * 0.15;
+            let pyB = isScaledMode ? pB.y : 100 + (pB.y - 100) * 0.15;
+
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(pA.x, pyA);
+            ctx.lineTo(pB.x, pyB);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillText(isScaledMode ? 'Distancia Euclídea Equilibrada (d=1.42)' : 'Distancia Deformada por Qo (d=345.2)', (pA.x+pB.x)/2, (pyA+pyB)/2 - 10);
+        }
+
+        // --- TAB 3: DBSCAN SIMULATOR ---
+        function runDBSCAN() {
+            const eps = parseInt(document.getElementById('eps-slider').value);
+            const minPts = parseInt(document.getElementById('minpts-slider').value);
+
+            document.getElementById('eps-val').innerText = eps;
+            document.getElementById('minpts-val').innerText = minPts;
+
+            const dbCanvas = document.getElementById('dbscan-canvas');
+            const ctx = dbCanvas.getContext('2d');
+            ctx.clearRect(0, 0, dbCanvas.width, dbCanvas.height);
+
+            let labels = new Array(points.length).fill(0);
+            let clusterId = 0;
+
+            function getNeighbors(i) {
+                let neighbors = [];
+                for(let j=0; j<points.length; j++) {
+                    if(Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y) <= eps) {
+                        neighbors.push(j);
+                    }
+                }
+                return neighbors;
+            }
+
+            for(let i=0; i<points.length; i++) {
+                if(labels[i] !== 0) continue;
+                let neighbors = getNeighbors(i);
+                if(neighbors.length < minPts) {
+                    labels[i] = -1;
+                } else {
+                    clusterId++;
+                    labels[i] = clusterId;
+                    let seeds = neighbors.filter(idx => idx !== i);
+                    while(seeds.length > 0) {
+                        let curr = seeds.pop();
+                        if(labels[curr] === -1) labels[curr] = clusterId;
+                        if(labels[curr] !== 0) continue;
+                        labels[curr] = clusterId;
+                        let currNeighbors = getNeighbors(curr);
+                        if(currNeighbors.length >= minPts) {
+                            seeds = seeds.concat(currNeighbors);
+                        }
+                    }
+                }
+            }
+
+            points.forEach((p, i) => {
+                let lbl = labels[i];
+                if(lbl === -1) {
+                    ctx.fillStyle = '#64748b';
+                } else {
+                    ctx.fillStyle = COLORS[(lbl-1) % COLORS.length];
+                }
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.stroke();
+
+                if(lbl === -1) {
+                    ctx.strokeStyle = '#f43f5e';
+                    ctx.beginPath();
+                    ctx.moveTo(p.x-5, p.y-5); ctx.lineTo(p.x+5, p.y+5);
+                    ctx.moveTo(p.x+5, p.y-5); ctx.lineTo(p.x-5, p.y+5);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function loadDataset(type) {
+            initWells();
+            if(type === 'rings') {
+                for(let a=0; a<Math.PI*2; a+=0.2) {
+                    points.push({ x: 450 + Math.cos(a)*180, y: 250 + Math.sin(a)*180 });
+                }
+            }
+            runDBSCAN();
+        }
+
+        // --- TAB 4: ELBOW CHART ---
+        function renderElbowChart() {
+            const elCanvas = document.getElementById('elbow-canvas');
+            const ctx = elCanvas.getContext('2d');
+            ctx.clearRect(0, 0, elCanvas.width, elCanvas.height);
+
+            const ks = [2, 3, 4, 5];
+            const distortions = [68.10, 7.14, 6.95, 6.20];
+
+            const padding = 80;
+            const w = elCanvas.width - padding*2;
+            const h = elCanvas.height - padding*2;
+
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, elCanvas.height - padding);
+            ctx.lineTo(elCanvas.width - padding, elCanvas.height - padding);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+
+            ks.forEach((k, idx) => {
+                let x = padding + (idx / (ks.length-1)) * w;
+                let y = (elCanvas.height - padding) - (distortions[idx] / 70.0) * h;
+
+                if(idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            ks.forEach((k, idx) => {
+                let x = padding + (idx / (ks.length-1)) * w;
+                let y = (elCanvas.height - padding) - (distortions[idx] / 70.0) * h;
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '14px Inter';
+                ctx.fillText(`K=${k}`, x - 10, elCanvas.height - padding + 25);
+                ctx.fillText(`Inercia: ${distortions[idx]}`, x - 25, y - 15);
+            });
+
+            let elbowX = padding + (1 / 3) * w;
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([6, 6]);
+            ctx.beginPath();
+            ctx.moveTo(elbowX, padding);
+            ctx.lineTo(elbowX, elCanvas.height - padding);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#f43f5e';
+            ctx.font = 'bold 14px Outfit';
+            ctx.fillText('📍 Codo Matemático (K=3)', elbowX + 10, padding + 30);
+        }
+
+        window.onload = () => {
+            initWells();
+        };
+    </script>
+</body>
+</html>
