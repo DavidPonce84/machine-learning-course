@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧠 Aprendizaje No Supervisado — K-Means desde Cero | Módulo 4 · SLB</title>
+<style>
+  :root {
+    --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --gold: #f59e0b;
+    --red: #ef4444; --green: #22c55e; --pink: #ec4899; --text: #f8fafc;
+    --muted: #94a3b8; --border: #334155;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; overflow-x:hidden; }
+  .container { max-width: 920px; margin:0 auto; padding:2rem 1.5rem; }
+  .hero { text-align:center; padding:4rem 0 2rem; position:relative; }
+  .hero h1 { font-size:2.8rem; background:linear-gradient(135deg, var(--accent), var(--pink)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:0.5rem; }
+  .hero .sub { color:var(--muted); font-size:1.15rem; }
+  .hero .badge { display:inline-block; background:var(--card); border:1px solid var(--border); border-radius:2rem; padding:0.4rem 1.2rem; margin-top:1rem; font-size:0.9rem; color:var(--accent); }
+  .section { background:var(--card); border:1px solid var(--border); border-radius:1.2rem; padding:2rem; margin:2rem 0; position:relative; overflow:hidden; }
+  .section h2 { color:var(--accent); font-size:1.6rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem; }
+  .section h3 { color:var(--gold); font-size:1.15rem; margin:1.2rem 0 0.5rem; }
+  .section p { margin-bottom:0.8rem; color:#cbd5e1; }
+  .section ul { padding-left:1.5rem; margin-bottom:0.8rem; color:#cbd5e1; }
+  .section li { margin-bottom:0.4rem; }
+  .callout { border-radius:0.8rem; padding:1.2rem; margin:1rem 0; font-size:0.95rem; }
+  .callout.info { background:rgba(56,189,248,0.1); border-left:3px solid var(--accent); }
+  .callout.warn { background:rgba(245,158,11,0.1); border-left:3px solid var(--gold); }
+  .callout.tip { background:rgba(34,197,94,0.1); border-left:3px solid var(--green); }
+  .code-block { background:#0f172a; border:1px solid var(--border); border-radius:0.6rem; padding:1.2rem; margin:0.8rem 0; font-family:'JetBrains Mono','Fira Code',monospace; font-size:0.82rem; overflow-x:auto; color:#e2e8f0; line-height:1.8; white-space:pre; tab-size:4; }
+  .code-block .kw { color:#c084fc; }
+  .code-block .fn { color:#38bdf8; }
+  .code-block .str { color:#4ade80; }
+  .code-block .num { color:#fb923c; }
+  .code-block .cm { color:#64748b; font-style:italic; }
+  .viz { background:#0f172a; border:1px solid var(--border); border-radius:0.8rem; margin:1rem 0; text-align:center; overflow:hidden; }
+  .viz canvas { display:block; margin:0 auto; }
+  .viz-caption { padding:0.6rem; color:var(--muted); font-size:0.8rem; border-top:1px solid var(--border); }
+  .btn { background:var(--accent); color:#0f172a; border:none; padding:0.5rem 1.2rem; border-radius:0.5rem; font-weight:600; cursor:pointer; font-size:0.9rem; margin:0.3rem; transition:opacity 0.2s; }
+  .btn:hover { opacity:0.85; }
+  .btn.outline { background:transparent; border:1px solid var(--accent); color:var(--accent); }
+  .slider-group { margin:1rem 0; }
+  .slider-group label { display:block; color:var(--muted); font-size:0.85rem; margin-bottom:0.3rem; }
+  .slider-group input[type=range] { width:100%; accent-color:var(--accent); }
+  table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:0.9rem; }
+  th { background:rgba(56,189,248,0.15); color:var(--accent); padding:0.6rem; text-align:left; border-bottom:2px solid var(--border); }
+  td { padding:0.6rem; border-bottom:1px solid var(--border); color:#cbd5e1; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin:1rem 0; }
+  @media(max-width:700px) { .grid-2 { grid-template-columns:1fr; } }
+  .grid-card { background:#0f172a; border:1px solid var(--border); border-radius:0.8rem; padding:1.2rem; }
+  .grid-card h4 { color:var(--gold); margin-bottom:0.5rem; }
+  .step-indicator { display:flex; gap:0.4rem; margin:1rem 0; flex-wrap:wrap; }
+  .step { background:var(--card); border:1px solid var(--border); border-radius:0.5rem; padding:0.4rem 0.8rem; font-size:0.8rem; color:var(--muted); transition:all 0.3s; }
+  .step.active { border-color:var(--accent); color:var(--accent); background:rgba(56,189,248,0.1); }
+  .formula { background:#0f172a; border:1px solid var(--accent); border-radius:0.6rem; padding:1rem; text-align:center; font-size:1.2rem; color:var(--gold); margin:0.8rem 0; font-family:'JetBrains Mono',monospace; }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .animate { animation:fadeInUp 0.6s ease-out; }
+  #scroll-progress { position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:100; transition:width 0.15s; }
+  .emoji-big { font-size:3rem; display:block; text-align:center; margin:0.5rem 0; }
+  .dim-demo { display:flex; gap:1rem; align-items:center; justify-content:center; flex-wrap:wrap; margin:1rem 0; }
+  .dim-box { background:rgba(56,189,248,0.1); border:1px dashed var(--accent); border-radius:0.5rem; padding:0.6rem 1rem; text-align:center; min-width:60px; }
+  .dim-box .val { font-size:1.3rem; color:var(--gold); font-weight:bold; }
+  .dim-box .lbl { font-size:0.7rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div id="scroll-progress"></div>
+<div class="container">
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero animate">
+  <h1>🧠 Aprendizaje No Supervisado</h1>
+  <p class="sub">Repaso Interactivo · K-Means, Escalado, Dimensiones & Yellowbrick</p>
+  <span class="badge">📦 Módulo 4 — Schlumberger (SLB) · Instructor: David Ponce</span>
+</div>
+
+<!-- ═══════════ 1. SUPERVISADO vs NO SUPERVISADO ═══════════ -->
+<div class="section animate" id="s1">
+  <h2>🔬 1. ¿Supervisado vs No Supervisado?</h2>
+  <p>Esta es <strong>la distinción más fundamental</strong> en Machine Learning. Vamos a entenderla con una analogía antes de tocar código.</p>
+  <div class="grid-2">
+    <div class="grid-card">
+      <h4>🏫 Aprendizaje <span style="color:#38bdf8">Supervisado</span></h4>
+      <p>Como un <strong>profesor con las respuestas</strong> del examen:</p>
+      <ul>
+        <li>📥 <strong>Entrada:</strong> características (horas de estudio, asistencia)</li>
+        <li>📤 <strong>Etiqueta conocida:</strong> la nota final (A, B, C)</li>
+      </ul>
+      <p>El modelo aprende a <strong>mapear</strong> entrada → etiqueta.</p>
+      <p style="color:var(--accent);font-weight:bold;">🎯 Objetivo: PREDECIR etiquetas para datos nuevos</p>
+    </div>
+    <div class="grid-card">
+      <h4>🔍 Aprendizaje <span style="color:#f59e0b">No Supervisado</span></h4>
+      <p>Como un <strong>explorador sin mapa</strong>:</p>
+      <ul>
+        <li>📥 <strong>Entrada:</strong> características (presión, caudal, water-cut)</li>
+        <li>❌ <strong>Sin etiquetas:</strong> nadie te dice "este pozo es Tipo A"</li>
+      </ul>
+      <p>El modelo <strong>descubre patrones ocultos</strong> por sí mismo.</p>
+      <p style="color:var(--gold);font-weight:bold;">🎯 Objetivo: DESCUBRIR estructura en los datos</p>
+    </div>
+  </div>
+  <div class="callout tip">
+    <strong>💡 Regla mnemotécnica:</strong> Supervisado = tienes las <strong>respuestas</strong> (etiquetas). No Supervisado = solo tienes las <strong>preguntas</strong> (datos), y quieres encontrar patrones.
+  </div>
+</div>
+
+<!-- ═══════════ 2. K-MEANS ═══════════ -->
+<div class="section animate" id="s2">
+  <h2>🎯 2. K-Means: El Algoritmo que Agrupa sin Etiquetas</h2>
+  <p>Imagina que eres un gerente de campo con <strong>50 pozos</strong> y quieres saber cuáles se comportan de forma similar. No tienes etiquetas previas. K-Means resuelve esto.</p>
+
+  <h3>🧩 ¿Qué hace K-Means?</h3>
+  <p>K-Means particiona tus datos en <strong>K grupos (clusters)</strong> donde cada punto pertenece al grupo cuyo <strong>centroide</strong> (punto central) está más cercano.</p>
+
+  <div class="callout info">
+    <strong>📐 Traducción simple:</strong> Es como poner <strong>K banderas</strong> en un mapa y asignar cada casa a la bandera más cercana. Luego mueves las banderas al centro de las casas asignadas. Repites hasta que las banderas dejen de moverse.
+  </div>
+
+  <h3>🔄 El Algoritmo Paso a Paso</h3>
+  <div class="step-indicator" id="kmeans-steps">
+    <span class="step active" data-step="0">0. Datos Crudos</span>
+    <span class="step" data-step="1">1. Inicializar K=3 centroides</span>
+    <span class="step" data-step="2">2. Asignar cada punto</span>
+    <span class="step" data-step="3">3. Recalcular centroides</span>
+    <span class="step" data-step="4">4. Repetir hasta converger</span>
+    <span class="step" data-step="5">✅ Resultado Final</span>
+  </div>
+  <div style="text-align:center;margin:0.5rem 0;">
+    <button class="btn outline" onclick="kmeansStep('prev')">◀ Anterior</button>
+    <button class="btn" onclick="kmeansStep('next')">Siguiente ▶</button>
+    <button class="btn outline" onclick="kmeansReset()">↺ Reiniciar</button>
+  </div>
+  <div class="viz"><canvas id="kmeansCanvas" width="700" height="420"></canvas>
+    <div class="viz-caption" id="kmeansCaption">Paso 0: 200 puntos de datos sin etiquetar. Cada punto = un pozo con 2 variables (presión y caudal).</div>
+  </div>
+
+  <div class="callout tip">
+    <strong>🔑 ¿Cuántos clusters (K) elegir?</strong> ¡No se adivina! Más adelante veremos el <strong>Método del Codo</strong> y <strong>Yellowbrick</strong> para elegir K de forma científica.
+  </div>
+
+  <h3>🤔 ¿Por qué en este ejemplo solo usamos 2 variables (WHP, Qo) y no todas?</h3>
+  <p>En el <strong>Día 2 (DBSCAN)</strong> trabajamos con <code>telemetria_anomala.csv</code>, que solo tiene <strong>2 columnas numéricas</strong>: <code>WHP_psi</code> y <code>Qo_bpd</code>. Es un dataset diseñado para detectar anomalías en <strong>un solo pozo</strong> a lo largo del tiempo.</p>
+  <p>En el <strong>Día 1 (K-Means)</strong>, en cambio, usamos <code>pozos_clustering.csv</code> con <strong>50 pozos y 7 variables</strong>. Ahí K-Means sí agrupa usando <span class="highlight">todas las dimensiones</span>.</p>
+  <div class="callout info">
+    <strong>🧠 La regla:</strong> Tú le das a K-Means la lista <code>features = ['Qo','Qw','Qg','WHP','BHP','Water_Cut','GOR']</code>. El algoritmo usa <strong>TODAS</strong>. Cuantas más variables relevantes le des, mejor será la agrupación. Pero recuerda: ¡siempre escala primero!
+  </div>
+</div>
+
+<!-- ═══════════ 3. DATOS NO ESCALADOS vs ESCALADOS (VISUAL IMPACTANTE) ═══════════ -->
+<div class="section animate" id="s3">
+  <h2>📏 3. La TRAMPA de NO Escalar — Mira la Diferencia</h2>
+  <p>Desliza la barra de abajo para <strong>transicionar</strong> entre datos crudos (sin escalar) y datos transformados con Z-Score. <strong style="color:var(--red);">Mismos datos. Mismo K-Means.</strong></p>
+
+  <div class="slider-group" style="margin:1.5rem 0;">
+    <label style="font-size:1rem;text-align:center;display:block;">
+      🔄 Arrastra: &nbsp;
+      <span style="color:var(--red);font-weight:bold;">SIN Escalar</span>
+      &nbsp;⟷&nbsp;
+      <span style="color:var(--green);font-weight:bold;">CON Escalar (Z-Score)</span>
+      &nbsp;— Valor actual: <span id="scaleLabel" style="color:var(--gold);">SIN Escalar</span>
+    </label>
+    <input type="range" min="0" max="100" value="0" id="scaleSlider" oninput="updateScaleView()" style="width:100%;height:8px;">
+  </div>
+
+  <div class="viz" style="position:relative;">
+    <canvas id="scaleCompareCanvas" width="820" height="460"></canvas>
+  </div>
+  <div class="viz-caption" id="scaleCaption">🔴 SIN ESCALAR: Caudal (0-2000) aplasta al Water-Cut (0-1). K-Means divide en franjas verticales — solo ve Qo.</div>
+
+  <div class="callout warn" style="margin-top:1rem;">
+    <strong>⚠️ Regla de Oro:</strong> Sin <code style="background:#334155;padding:0.1rem 0.4rem;border-radius:0.3rem;">StandardScaler()</code>, K-Means <strong>NO SIRVE</strong>. Una variable numéricamente grande (2000 bpd) domina a una pequeña (0.25 water-cut). Al escalar, <strong>todas pesan lo mismo</strong>.
+  </div>
+
+  <h3>📐 La Fórmula Z-Score explicada</h3>
+  <div class="formula" style="font-size:1.4rem;">z = (x − μ) ÷ σ</div>
+  <table>
+    <tr><th>Símbolo</th><th>Significado</th><th>Ejemplo con Caudal (Qo)</th></tr>
+    <tr><td><strong>x</strong></td><td>Valor original del dato</td><td>Un pozo produce 2000 bpd</td></tr>
+    <tr><td><strong>μ</strong> (mu)</td><td>Media de TODOS los datos</td><td>La media de Qo es 1500 bpd</td></tr>
+    <tr><td><strong>σ</strong> (sigma)</td><td>Desviación estándar</td><td>σ = 500 bpd</td></tr>
+    <tr><td><strong>z</strong></td><td>Valor transformado</td><td>z = (2000−1500)/500 = <strong>+1.0</strong></td></tr>
+  </table>
+  <p><strong>Interpretación:</strong> Un z-score de +1.0 significa "1 desviación estándar por encima de la media". Todas las variables quedan en la misma escala. 🎯</p>
+</div>
+
+<!-- ═══════════ 4. DIMENSIONES ═══════════ -->
+<div class="section animate" id="s4">
+  <h2>🌌 4. Features = Dimensiones: ¿Cómo se Representa un Punto?</h2>
+  <p>Esta es <strong style="color:var(--gold);">la gran confusión del día</strong>: "Si tengo 5 variables, ¿cómo aparecen en un plano 2D?"</p>
+
+  <h3>🧊 Piensa en una ficha de catálogo</h3>
+  <p>Cada pozo es como una <strong>ficha con N características</strong>:</p>
+  <div class="dim-demo">
+    <div class="dim-box"><div class="lbl">Qo (bpd)</div><div class="val">1850</div></div>
+    <div class="dim-box"><div class="lbl">Qw (bpd)</div><div class="val">320</div></div>
+    <div class="dim-box"><div class="lbl">Qg (mscfd)</div><div class="val">540</div></div>
+    <div class="dim-box"><div class="lbl">WHP (psi)</div><div class="val">410</div></div>
+    <div class="dim-box"><div class="lbl">BHP (psi)</div><div class="val">2780</div></div>
+  </div>
+  <p style="text-align:center;color:var(--muted);">↑ Este punto es UN pozo. Vive en ℝ⁵ (espacio de 5 dimensiones).</p>
+
+  <table>
+    <tr><th>Estrategia</th><th>¿Cómo funciona?</th><th>¿Cuándo usarla?</th></tr>
+    <tr><td><strong>1. Elegir 2 variables</strong></td><td>Graficamos solo 2 columnas (ej. Qo vs WHP)</td><td>Para exploración rápida. <strong>PERO:</strong> pierdes información de las otras.</td></tr>
+    <tr><td><strong>2. K-Means usa TODAS</strong></td><td>El algoritmo calcula en 5D. Visualizamos resultado en 2D</td><td>✅ La correcta. K-Means "ve" todo el espacio 5D.</td></tr>
+    <tr><td><strong>3. PCA (Día 3)</strong></td><td>Reduce 5D → 2D combinaciones que capturan máxima varianza</td><td>Cuando quieres visualizar estructura completa sin perder info.</td></tr>
+  </table>
+
+  <h3>🗺️ Demostración Interactiva: 3 Features → Plano 2D</h3>
+  <p>Mueve el slider de K. Los puntos tienen 3 valores (Qo, WHP, Water-Cut). K-Means agrupa usando <strong>las 3 dimensiones</strong>, pero el canvas solo dibuja 2:</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start;">
+    <div>
+      <div class="slider-group"><label>📊 K (número de clusters): <span id="dimKVal">3</span></label><input type="range" min="1" max="5" value="3" id="dimK" oninput="updateDimDemo()"></div>
+      <div class="formula" style="font-size:0.9rem;">🧮 K-Means calcula en ℝ³<br>(usa Qo, WHP y Water-Cut)</div>
+      <p style="font-size:0.8rem;color:var(--muted);margin-top:0.5rem;">Observa: aunque solo ves 2 ejes (Qo vs WHP), los clusters se formaron considerando también el <strong>Water-Cut</strong> como 3era dimensión invisible. Puntos que parecen cercanos en 2D pueden pertenecer a clusters distintos porque difieren en Water-Cut.</p>
+    </div>
+    <div class="viz"><canvas id="dimCanvas" width="380" height="340"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════ 5. DATOS DISPERSOS ═══════════ -->
+<div class="section animate" id="s5">
+  <h2>🔖 5. "Los datos están dispersos... ¿a cuál pozo corresponde cada punto?"</h2>
+  <p>Otra duda clave del día. Vamos a resolverla:</p>
+  <h3>🎨 La columna 'Cluster' NO es la columna 'Pozo'</h3>
+  <p>Cuando K-Means termina, asigna un <strong>número de cluster</strong> (0, 1, 2) a cada fila. Este número <strong>no reemplaza</strong> al identificador del pozo — es <strong>información adicional</strong>.</p>
+  <table>
+    <tr><th>Pozo</th><th>Qo_bpd</th><th>WHP_psi</th><th>Water_Cut</th><th style="color:var(--gold);">Cluster (NUEVO)</th></tr>
+    <tr><td>Pozo-01</td><td>1850</td><td>410</td><td>0.12</td><td style="color:var(--accent);">0</td></tr>
+    <tr><td>Pozo-02</td><td>320</td><td>95</td><td>0.85</td><td style="color:var(--pink);">1</td></tr>
+    <tr><td>Pozo-03</td><td>1780</td><td>390</td><td>0.15</td><td style="color:var(--accent);">0</td></tr>
+    <tr><td>Pozo-04</td><td>290</td><td>80</td><td>0.82</td><td style="color:var(--pink);">1</td></tr>
+  </table>
+  <p>👉 <strong>Pozo-01 y Pozo-03</strong> están en el Cluster 0. <strong>Pozo-02 y Pozo-04</strong> en el Cluster 1. El identificador "Pozo-01" sigue intacto.</p>
+  <div class="callout tip">
+    <strong>💡 Para saber qué pozo está en qué cluster:</strong> <code style="background:#334155;padding:0.1rem 0.4rem;border-radius:0.3rem;">df.groupby(['Pozo','Cluster']).size()</code>
+  </div>
+</div>
+
+<!-- ═══════════ 6. YELLOWBRICK ═══════════ -->
+<div class="section animate" id="s6">
+  <h2>🟡 6. Yellowbrick: Eligiendo K con Ciencia</h2>
+  <p>Elegir el número de clusters <strong>NO es adivinanza</strong>. Yellowbrick nos da el <strong>Método del Codo</strong>.</p>
+
+  <h3>📐 ¿Qué es la INERCIA? (El concepto MÁS importante del método del codo)</h3>
+  <p>La <strong style="color:var(--gold);">inercia</strong> es un número que mide <strong>qué tan "apretados" están los clusters</strong>. Se calcula así:</p>
+
+  <div class="formula" style="font-size:1.1rem;">Inercia = Σ (distancia de cada punto a su centroide)²</div>
+
+  <p><strong>En palabras simples:</strong> Para cada cluster, mido qué tan lejos está cada punto de su centro (el centroide). Elevo esa distancia al cuadrado. Sumo todo. Ese número es la inercia.</p>
+
+  <div class="grid-2">
+    <div class="grid-card" style="border:1px solid var(--red);">
+      <h4>🔴 Inercia ALTA (mala)</h4>
+      <p>Los puntos están <strong>lejos</strong> de sus centroides. Clusters "flojos", dispersos, poco cohesionados.</p>
+      <p style="font-size:0.85rem;color:var(--muted);">Ej: K=1. Todos los puntos en un solo cluster gigante. La inercia es enorme porque el centroide está lejos de todos.</p>
+    </div>
+    <div class="grid-card" style="border:1px solid var(--green);">
+      <h4>🟢 Inercia BAJA (buena)</h4>
+      <p>Los puntos están <strong>cerca</strong> de sus centroides. Clusters compactos y bien definidos.</p>
+      <p style="font-size:0.85rem;color:var(--muted);">Ej: K=50 (tantos clusters como puntos). Cada punto ES su propio centroide. Inercia = 0. Pero no sirve de nada.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>⚠️ El dilema:</strong> Más clusters (K más grande) <strong>siempre</strong> reducen la inercia. Pero llega un punto donde agregar otro cluster apenas mejora nada. Ese punto es <strong>EL CODO</strong> — el balance perfecto entre pocos clusters (inercia alta) y muchos clusters (inercia baja pero inútil).
+  </div>
+
+  <h3>📊 Visualicemos la Inercia para K=1 hasta K=10</h3>
+  <table>
+    <tr><th>K</th><th>1</th><th>2</th><th style="color:var(--gold);">3 ✦</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th></tr>
+    <tr><td><strong>Inercia</strong></td><td>4200</td><td>2100</td><td style="color:var(--gold);">1100</td><td>780</td><td>620</td><td>530</td><td>470</td><td>430</td><td>400</td><td>380</td></tr>
+    <tr><td><strong>Mejora</strong></td><td>-</td><td>−2100</td><td style="color:var(--gold);">−1000</td><td>−320</td><td>−160</td><td>−90</td><td>−60</td><td>−40</td><td>−30</td><td>−20</td></tr>
+  </table>
+  <p>Observa la fila "Mejora": de K=2 a K=3 la inercia baja <strong>1000 puntos</strong>. De K=3 a K=4 solo baja <strong>320</strong>. De K=9 a K=10 baja apenas <strong>20</strong>. <span class="highlight">¡K=3 es el punto donde el beneficio se desploma! Ese es el codo.</span></p>
+
+  <h3>📉 Método del Codo (Elbow Method) — Gráfico Interactivo</h3>
+  <div class="viz"><canvas id="elbowCanvas" width="700" height="380"></canvas>
+    <div class="viz-caption">Mueve el cursor sobre los puntos para ver valores. El "codo" está en K=3 — agregar más clusters no reduce significativamente la inercia.</div>
+  </div>
+  <div class="callout info">
+    <strong>🧠 ¿Cómo leer el codo?</strong> Donde la curva hace un <strong>quiebre brusco</strong> (como un brazo doblándose). A partir de ese punto, agregar más clusters da <strong>beneficio marginal</strong>.
+  </div>
+
+  <h3>🐍 Yellowbrick en 1 línea</h3>
+  <div class="code-block"><span class="cm"># En lugar de codificar el codo a mano...</span>
+<span class="kw">from</span> yellowbrick.cluster <span class="kw">import</span> KElbowVisualizer
+<span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans
+
+model = <span class="fn">KMeans</span>(random_state=42)
+visualizer = <span class="fn">KElbowVisualizer</span>(model, k=(1,10))
+visualizer.<span class="fn">fit</span>(X_scaled)
+visualizer.<span class="fn">show</span>()
+<span class="cm"># ¡Yellowbrick dibuja el codo y marca el K óptimo automáticamente!</span></div>
+  <p>Yellowbrick prueba K=1 hasta K=10, calcula la inercia para cada uno, dibuja la curva, y <strong>marca con una línea vertical</strong> el K óptimo. Todo en 4 líneas.</p>
+</div>
+
+<!-- ═══════════ 7. CÓDIGO EXPLICADO ═══════════ -->
+<div class="section animate" id="s7">
+  <h2>💻 7. K-Means en Python: Código Explicado Línea por Línea</h2>
+  <p>Aquí está el flujo completo que usamos en el Día 1. <strong>Cada línea tiene su explicación al lado.</strong></p>
+
+  <div class="code-block"><span class="cm"># ─── PASO 1: Importar librerías ───</span>
+<span class="kw">import</span> pandas <span class="kw">as</span> pd                          <span class="cm"># Manejo de DataFrames (tablas)</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np                           <span class="cm"># Operaciones matemáticas y arrays</span>
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler <span class="cm"># ← EL ESCALADOR Z-Score</span>
+<span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans           <span class="cm"># ← EL algoritmo de clustering</span>
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt            <span class="cm"># Gráficos</span>
+<span class="kw">import</span> seaborn <span class="kw">as</span> sns                       <span class="cm"># Gráficos estadísticos bonitos</span>
+
+<span class="cm"># ─── PASO 2: Cargar datos ───</span>
+df = pd.<span class="fn">read_csv</span>(<span class="str">'pozos_clustering.csv'</span>)    <span class="cm"># Lee el CSV → DataFrame con 50 pozos</span>
+
+<span class="cm"># ─── PASO 3: Definir FEATURES (las columnas que K-Means usará) ───</span>
+features = [<span class="str">'Qo_bpd'</span>, <span class="str">'Qw_bpd'</span>, <span class="str">'Qg_mscfd'</span>,     <span class="cm"># 💡 CADA columna = UNA dimensión</span>
+            <span class="str">'WHP_psi'</span>, <span class="str">'BHP_psi'</span>,                <span class="cm"># 💡 5 features = espacio ℝ⁵</span>
+            <span class="str">'Water_Cut'</span>, <span class="str">'GOR'</span>]                <span class="cm"># 💡 7 features = espacio ℝ⁷</span>
+
+<span class="cm"># ─── PASO 4: ¡ESCALAR! (CRÍTICO) ───</span>
+scaler = <span class="fn">StandardScaler</span>()                 <span class="cm"># Crea el objeto escalador (aún no hace nada)</span>
+X_scaled = scaler.<span class="fn">fit_transform</span>(df[features]) <span class="cm"># .fit(): calcula μ y σ de cada columna</span>
+                                          <span class="cm"># .transform(): aplica z = (x-μ)/σ</span>
+                                          <span class="cm"># Resultado: array con media=0 y std=1</span>
+
+<span class="cm"># ─── PASO 5: Elegir K con Yellowbrick ───</span>
+<span class="kw">from</span> yellowbrick.cluster <span class="kw">import</span> KElbowVisualizer
+model = <span class="fn">KMeans</span>(random_state=<span class="num">42</span>)          <span class="cm"># random_state = semilla fija (reproducible)</span>
+viz = <span class="fn">KElbowVisualizer</span>(model, k=(<span class="num">1</span>,<span class="num">10</span>))   <span class="cm"># Prueba K=1,2,3... hasta K=10</span>
+viz.<span class="fn">fit</span>(X_scaled)                        <span class="cm"># Ejecuta K-Means 10 veces y dibuja el codo</span>
+viz.<span class="fn">show</span>()                               <span class="cm"># Muestra el gráfico con K óptimo marcado</span>
+
+<span class="cm"># ─── PASO 6: Entrenar K-Means con el K elegido ───</span>
+kmeans = <span class="fn">KMeans</span>(n_clusters=<span class="num">3</span>,            <span class="cm"># K=3 clusters (elegido del codo)</span>
+                random_state=<span class="num">42</span>)          <span class="cm"># Misma semilla = mismos resultados</span>
+df[<span class="str">'Cluster'</span>] = kmeans.<span class="fn">fit_predict</span>(X_scaled) <span class="cm"># .fit(): entrena | .predict(): asigna</span>
+                                            <span class="cm"># Cada fila recibe 0, 1, o 2</span>
+
+<span class="cm"># ─── PASO 7: Ver resultados ───</span>
+<span class="fn">print</span>(df[<span class="str">'Cluster'</span>].<span class="fn">value_counts</span>())       <span class="cm"># ¿Cuántos pozos en cada cluster?</span>
+<span class="fn">print</span>(df.<span class="fn">groupby</span>(<span class="str">'Cluster'</span>)[features].<span class="fn">mean</span>()) <span class="cm"># Perfil promedio de cada grupo</span></div>
+</div>
+
+<!-- ═══════════ 8. RECAP ═══════════ -->
+<div class="section animate" id="s8">
+  <h2>📋 8. Recap: Lo que DEBES Recordar</h2>
+  <div class="grid-2">
+    <div class="grid-card"><h4>✅ Sí</h4><ul>
+      <li>Escalar SIEMPRE antes de K-Means</li>
+      <li>Cada columna en <code>features</code> = una dimensión</li>
+      <li>K-Means usa TODAS las dimensiones</li>
+      <li>Usar Yellowbrick para elegir K</li>
+      <li>El cluster es info NUEVA, no reemplaza al Pozo</li>
+    </ul></div>
+    <div class="grid-card"><h4>❌ No</h4><ul>
+      <li>NO uses K-Means sin escalar</li>
+      <li>NO adivines K "a ojo"</li>
+      <li>NO confundas "ver 2D" con "calcular en 2D"</li>
+      <li>NO pienses que el cluster borra la columna Pozo</li>
+      <li>NO uses K-Means si tus clusters no son esféricos (→ DBSCAN, Día 2)</li>
+    </ul></div>
+  </div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <span class="emoji-big">🚀</span>
+    <p style="font-size:1.1rem;">¡Con esto estás listo para el <strong>Día 2: DBSCAN y Outliers</strong>!</p>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+(function(){
+// ═══════════════════════ SCROLL ═══════════════════════
+window.addEventListener('scroll', ()=>{
+  const pct = (document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;
+  document.getElementById('scroll-progress').style.width = pct+'%';
+});
+
+const clusterColors = ['#38bdf8','#f59e0b','#22c55e','#ec4899','#a78bfa'];
+
+// ═══════════════════════ K-MEANS ANIMATION ═══════════════════════
+const canvas = document.getElementById('kmeansCanvas');
+const ctx = canvas.getContext('2d');
+const W=canvas.width, H=canvas.height, K=3, NP=180;
+let pts=[], cents=[], assigns=[], cur=0;
+
+function genData(){
+  pts=[];
+  const cs=[
+    {x:W*0.20,y:H*0.22,s:40}, {x:W*0.52,y:H*0.68,s:35}, {x:W*0.80,y:H*0.30,s:48}
+  ];
+  cs.forEach((c,ci)=>{ for(let i=0;i<55;i++) pts.push({x:c.x+(Math.random()-0.5)*c.s*2.2, y:c.y+(Math.random()-0.5)*c.s*2.2, tc:ci}); });
+  for(let i=pts.length;i<NP;i++) pts.push({x:50+Math.random()*(W-100), y:40+Math.random()*(H-80), tc:-1});
+  assigns=new Array(NP).fill(-1); cents=[]; cur=0; updateSteps(0);
+}
+
+function initCents(){ cents=[]; let s=[...pts].sort(()=>Math.random()-0.5); for(let i=0;i<K;i++) cents.push({x:s[i].x,y:s[i].y}); }
+
+function assign(){
+  for(let i=0;i<pts.length;i++){ let md=1e9,b=0; for(let j=0;j<cents.length;j++){ let d=(pts[i].x-cents[j].x)**2+(pts[i].y-cents[j].y)**2; if(d<md){md=d;b=j;} } assigns[i]=b; }
+}
+
+function updateCents(){
+  let s=Array(K).fill(null).map(()=>({x:0,y:0,n:0}));
+  for(let i=0;i<pts.length;i++){ let c=assigns[i]; if(c>=0){s[c].x+=pts[i].x;s[c].y+=pts[i].y;s[c].n++;} }
+  for(let j=0;j<K;j++){ if(s[j].n>0) cents[j]={x:s[j].x/s[j].n,y:s[j].y/s[j].n}; }
+}
+
+const sn=['Paso 0: 200 puntos de datos sin etiquetar. Cada punto = un pozo con 2 variables (presión y caudal).',
+  'Paso 1: K=3 centroides inicializados aleatoriamente (estrellas ★).',
+  'Paso 2: Cada punto se asigna al centroide MÁS CERCANO (colores).',
+  'Paso 3: Los centroides se mueven al centro de sus puntos asignados.',
+  'Paso 4: Se repite: reasignar → recalcular hasta que nada cambia.',
+  '✅ Resultado Final: 3 clusters estables. K-Means convergió.'];
+
+function drawK(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(100,116,139,0.08)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.fillStyle='#64748b'; ctx.font='11px system-ui';
+  ctx.fillText('← Caudal de Crudo (Qo_bpd) →',W/2-90,H-8);
+  ctx.save(); ctx.translate(14,H/2+50); ctx.rotate(-Math.PI/2);
+  ctx.fillText('← Presión en Cabeza (WHP_psi) →',0,0); ctx.restore();
+
+  for(let i=0;i<pts.length;i++){
+    let p=pts[i], a=assigns[i];
+    ctx.fillStyle=(a>=0&&cur>=2)?clusterColors[a]:'#64748b';
+    ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.arc(p.x,p.y,5.5,0,Math.PI*2); ctx.fill();
+  }
+
+  if(cur>=1&&cents.length>0){
+    for(let j=0;j<cents.length;j++){
+      let c=cents[j];
+      let g=ctx.createRadialGradient(c.x,c.y,2,c.x,c.y,20);
+      g.addColorStop(0,clusterColors[j]); g.addColorStop(1,'transparent');
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(c.x,c.y,20,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=clusterColors[j]; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+      ctx.beginPath();
+      for(let s=0;s<10;s++){ let r=s%2===0?13:5, a=(s*Math.PI/5)-Math.PI/2; let sx=c.x+Math.cos(a)*r, sy=c.y+Math.sin(a)*r; s===0?ctx.moveTo(sx,sy):ctx.lineTo(sx,sy); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle='#fff'; ctx.font='bold 10px system-ui'; ctx.fillText('C'+(j+1),c.x+15,c.y+4);
+    }
+  }
+  document.getElementById('kmeansCaption').textContent=sn[cur];
+}
+
+function updateSteps(s){ cur=s; document.querySelectorAll('#kmeans-steps .step').forEach((e,i)=>e.classList.toggle('active',i===s)); }
+
+window.kmeansStep=function(dir){
+  if(dir==='next'){
+    if(cur===0){initCents();updateSteps(1);} else if(cur===1){assign();updateSteps(2);}
+    else if(cur===2){updateCents();updateSteps(3);} else if(cur===3){assign();updateCents();assign();updateCents();updateSteps(4);}
+    else if(cur===4){assign();updateCents();assign();updateCents();assign();updateSteps(5);}
+  } else {
+    if(cur===1){cents=[];updateSteps(0);} else if(cur===2){cents=[];assigns=new Array(NP).fill(-1);updateSteps(0);}
+    else if(cur===3){assign();updateSteps(2);} else if(cur===4){updateCents();updateSteps(3);} else if(cur===5){updateSteps(3);}
+  }
+  drawK();
+};
+
+window.kmeansReset=function(){ genData(); drawK(); };
+
+// ═══════════════════════ ELBOW ═══════════════════════
+const ec=document.getElementById('elbowCanvas'), exx=ec.getContext('2d'), eW=ec.width, eH=ec.height;
+const inertias=[4200,2100,1100,780,620,530,470,430,400,380], Km=10;
+let eh=-1;
+
+function drawE(){
+  exx.clearRect(0,0,eW,eH);
+  let p={l:60,r:30,t:30,b:50}, pw=eW-p.l-p.r, ph=eH-p.t-p.b;
+  exx.strokeStyle='rgba(100,116,139,0.1)'; exx.lineWidth=0.5;
+  for(let i=0;i<=5;i++){ let y=p.t+(ph/5)*i; exx.beginPath(); exx.moveTo(p.l,y); exx.lineTo(eW-p.r,y); exx.stroke(); }
+  exx.strokeStyle='#64748b'; exx.lineWidth=1.5;
+  exx.beginPath(); exx.moveTo(p.l,p.t); exx.lineTo(p.l,eH-p.b); exx.stroke();
+  exx.beginPath(); exx.moveTo(p.l,eH-p.b); exx.lineTo(eW-p.r,eH-p.b); exx.stroke();
+  exx.fillStyle='#94a3b8'; exx.font='12px system-ui';
+  exx.fillText('K (Número de Clusters)',eW/2-70,eH-8);
+  exx.save(); exx.translate(14,eH/2+20); exx.rotate(-Math.PI/2); exx.fillText('Inercia (∑ dist²)',0,0); exx.restore();
+  for(let k=1;k<=Km;k++) exx.fillText(k,p.l+(pw/(Km-1))*(k-1)-4,eH-p.b+18);
+  exx.strokeStyle='#f59e0b'; exx.lineWidth=3; exx.beginPath();
+  for(let i=0;i<inertias.length;i++){ let x=p.l+(pw/(Km-1))*i, y=p.t+(inertias[i]/4200)*ph; i===0?exx.moveTo(x,y):exx.lineTo(x,y); }
+  exx.stroke();
+  for(let i=0;i<inertias.length;i++){
+    let x=p.l+(pw/(Km-1))*i, y=p.t+(inertias[i]/4200)*ph;
+    exx.fillStyle=i===eh?'#fff':'#f59e0b'; exx.beginPath(); exx.arc(x,y,i===eh?8:5,0,Math.PI*2); exx.fill();
+    if(i===eh){ exx.fillStyle='#fff'; exx.font='bold 13px system-ui'; exx.fillText(`K=${i+1}  Inercia=${inertias[i]}`,x+10,y-10); }
+  }
+  let ex=p.l+(pw/(Km-1))*2, ey=p.t+(inertias[2]/4200)*ph;
+  exx.strokeStyle='#ef4444'; exx.lineWidth=2; exx.setLineDash([6,4]);
+  exx.beginPath(); exx.moveTo(ex,ey-20); exx.lineTo(ex,ey+30); exx.stroke(); exx.setLineDash([]);
+  exx.fillStyle='#ef4444'; exx.font='bold 12px system-ui'; exx.fillText('← CODO (K=3 óptimo)',ex+8,ey-15);
+}
+
+ec.addEventListener('mousemove',(e)=>{
+  let r=ec.getBoundingClientRect(), mx=(e.clientX-r.left)*(ec.width/r.width);
+  let pl=60,pw=eW-pl-30, f=-1;
+  for(let i=0;i<inertias.length;i++){ let x=pl+(pw/(Km-1))*i; if(Math.abs(mx-x)<15){f=i;break;} }
+  eh=f; drawE();
+});
+ec.addEventListener('mouseleave',()=>{eh=-1;drawE();});
+
+// ═══════════════════════ SCALE COMPARISON (SINGLE CANVAS + SLIDER) ═══════════════════════
+const scc=document.getElementById('scaleCompareCanvas'), scctx=scc.getContext('2d'), scW=scc.width, scH=scc.height;
+
+// 3 real clusters with very different Qo scale vs WC scale
+const scData = [];
+// Cluster 0: high Qo (~1500), low WC (~0.10) — "buenos productores"
+// Cluster 1: medium Qo (~800), medium WC (~0.45) — "maduros"
+// Cluster 2: low Qo (~200), high WC (~0.85) — "agotados"
+const scClusters = [
+  {n:30, qoM:1500, qoS:100, wcM:0.10, wcS:0.03, color:0},   // alta prod, bajo WC
+  {n:30, qoM:800,  qoS:80,  wcM:0.45, wcS:0.04, color:1},   // media prod, medio WC
+  {n:30, qoM:200,  qoS:40,  wcM:0.85, wcS:0.03, color:2},   // baja prod, alto WC
+];
+for(let c of scClusters){
+  for(let i=0;i<c.n;i++){
+    scData.push({qo:c.qoM+(Math.random()-0.5)*c.qoS*2, wc:Math.max(0,Math.min(1,c.wcM+(Math.random()-0.5)*c.wcS*2)), tc:c.color});
+  }
+}
+
+// Compute z-scores
+let scQo=scData.map(d=>d.qo), scWc=scData.map(d=>d.wc);
+let qoM=scQo.reduce((a,b)=>a+b)/scQo.length, qoS=Math.sqrt(scQo.reduce((a,b)=>a+(b-qoM)**2,0)/scQo.length);
+let wcM=scWc.reduce((a,b)=>a+b)/scWc.length, wcS=Math.sqrt(scWc.reduce((a,b)=>a+(b-wcM)**2,0)/scWc.length);
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+function runKMeans(points, dims, K){
+  // points: array of {x,y,tc}, dims: {minX,maxX,minY,maxY}
+  let cents=[], assigns=[];
+  // Init centroids randomly
+  let sh=[...points].sort(()=>Math.random()-0.5);
+  for(let i=0;i<K;i++) cents.push({x:sh[i].x, y:sh[i].y});
+  // 5 iterations
+  for(let iter=0;iter<8;iter++){
+    // Assign
+    assigns=points.map(p=>{let md=1e9,b=0;for(let j=0;j<K;j++){let d=(p.x-cents[j].x)**2+(p.y-cents[j].y)**2;if(d<md){md=d;b=j;}}return b;});
+    // Update
+    let sums=Array(K).fill(null).map(()=>({x:0,y:0,n:0}));
+    for(let i=0;i<points.length;i++){let c=assigns[i];sums[c].x+=points[i].x;sums[c].y+=points[i].y;sums[c].n++;}
+    for(let j=0;j<K;j++){if(sums[j].n>0) cents[j]={x:sums[j].x/sums[j].n, y:sums[j].y/sums[j].n};}
+  }
+  return {cents, assigns};
+}
+
+window.updateScaleView=function(){
+  let t=parseInt(document.getElementById('scaleSlider').value)/100;
+  let lbl=document.getElementById('scaleLabel');
+  let cap=document.getElementById('scaleCaption');
+
+  if(t<0.05){ lbl.innerHTML='SIN Escalar'; lbl.style.color='var(--red)'; cap.innerHTML='🔴 <strong>SIN ESCALAR:</strong> Caudal (0-2000) aplasta al Water-Cut (0-1). K-Means divide en franjas verticales — solo ve Qo. ¡Clusters incorrectos!'; }
+  else if(t>0.95){ lbl.innerHTML='CON Escalar (Z-Score)'; lbl.style.color='var(--green)'; cap.innerHTML='🟢 <strong>CON Z-SCORE:</strong> Ambas variables en la misma escala. K-Means encuentra los 3 clusters reales. ¡Así debe ser!'; }
+  else{ lbl.innerHTML=Math.round(t*100)+'% transición'; lbl.style.color='var(--gold)'; cap.innerHTML='🔄 <strong>TRANSICIÓN:</strong> Observa cómo los ejes se comprimen/expanden al aplicar Z-Score. Los puntos se redistribuyen.'; }
+
+  scctx.clearRect(0,0,scW,scH);
+
+  // Pad
+  let pad={l:80,r:30,t:30,b:60};
+  let pw=scW-pad.l-pad.r, ph=scH-pad.t-pad.b;
+
+  // Interpolate axes
+  let rawMinX=0, rawMaxX=2000, rawMinY=0, rawMaxY=1.0;
+  let scMinX=-3, scMaxX=3, scMinY=-3, scMaxY=3;
+  let curMinX=lerp(rawMinX,scMinX,t), curMaxX=lerp(rawMaxX,scMaxX,t);
+  let curMinY=lerp(rawMinY,scMinY,t), curMaxY=lerp(rawMaxY,scMaxY,t);
+
+  function toScreenX(v){ return pad.l+((v-curMinX)/(curMaxX-curMinX))*pw; }
+  function toScreenY(v){ return pad.t+ph-((v-curMinY)/(curMaxY-curMinY))*ph; }
+
+  // Map data to current view
+  let curPts=scData.map(d=>({
+    sx:toScreenX(lerp(d.qo, (d.qo-qoM)/qoS, t)),
+    sy:toScreenY(lerp(d.wc, (d.wc-wcM)/wcS, t)),
+    x:lerp(d.qo, (d.qo-qoM)/qoS, t),
+    y:lerp(d.wc, (d.wc-wcM)/wcS, t),
+    tc:d.tc
+  }));
+
+  // Run K-Means on current transformed data
+  let {cents, assigns} = runKMeans(curPts, {minX:curMinX,maxX:curMaxX,minY:curMinY,maxY:curMaxY}, 3);
+
+  // Grid
+  scctx.strokeStyle='rgba(100,116,139,0.08)'; scctx.lineWidth=0.5;
+  for(let x=pad.l;x<=scW-pad.r;x+=pw/8){scctx.beginPath();scctx.moveTo(x,pad.t);scctx.lineTo(x,pad.t+ph);scctx.stroke();}
+  for(let y=pad.t;y<=pad.t+ph;y+=ph/6){scctx.beginPath();scctx.moveTo(pad.l,y);scctx.lineTo(scW-pad.r,y);scctx.stroke();}
+
+  // Axes
+  scctx.strokeStyle='#64748b'; scctx.lineWidth=1.5;
+  scctx.beginPath(); scctx.moveTo(pad.l,pad.t); scctx.lineTo(pad.l,pad.t+ph); scctx.stroke();
+  scctx.beginPath(); scctx.moveTo(pad.l,pad.t+ph); scctx.lineTo(scW-pad.r,pad.t+ph); scctx.stroke();
+
+  // Axis labels
+  scctx.fillStyle='#94a3b8'; scctx.font='11px system-ui';
+  let xLabel=t<0.3?'Caudal Qo (bpd) →':'Caudal Qo (z-score) →';
+  let yLabel=t<0.3?'Water-Cut →':'Water-Cut (z-score) →';
+  scctx.fillText(xLabel, scW/2-60, scH-10);
+  scctx.save(); scctx.translate(12, scH/2+20); scctx.rotate(-Math.PI/2); scctx.fillText(yLabel,0,0); scctx.restore();
+
+  // Axis ticks
+  scctx.fillStyle='#64748b'; scctx.font='9px system-ui';
+  for(let i=0;i<=5;i++){
+    let xv=curMinX+(curMaxX-curMinX)*(i/5), yv=curMinY+(curMaxY-curMinY)*(i/5);
+    scctx.fillText(xv.toFixed(t<0.3?0:1), toScreenX(xv)-10, pad.t+ph+16);
+    scctx.fillText(yv.toFixed(t<0.3?2:1), pad.l-55, toScreenY(yv)+4);
+  }
+
+  // Draw points colored by K-Means assignment
+  for(let i=0;i<curPts.length;i++){
+    let p=curPts[i], a=assigns[i];
+    scctx.fillStyle=clusterColors[a]; scctx.globalAlpha=0.7;
+    scctx.beginPath(); scctx.arc(p.sx,p.sy,5,0,Math.PI*2); scctx.fill();
+    scctx.fillStyle='rgba(255,255,255,0.1)'; scctx.beginPath(); scctx.arc(p.sx,p.sy,7,0,Math.PI*2); scctx.fill();
+  }
+  scctx.globalAlpha=1;
+
+  // Draw true centroids for reference (small dots)
+  for(let j=0;j<3;j++){
+    let truePts=curPts.filter(p=>p.tc===j);
+    if(truePts.length===0) continue;
+    let tcx=truePts.reduce((a,b)=>a+b.x,0)/truePts.length;
+    let tcy=truePts.reduce((a,b)=>a+b.y,0)/truePts.length;
+    scctx.strokeStyle=clusterColors[j]; scctx.lineWidth=1; scctx.setLineDash([3,3]);
+    scctx.beginPath(); scctx.arc(toScreenX(tcx),toScreenY(tcy),6,0,Math.PI*2); scctx.stroke();
+    scctx.setLineDash([]);
+  }
+
+  // Draw K-Means centroids (big)
+  for(let j=0;j<cents.length;j++){
+    let cx=toScreenX(cents[j].x), cy=toScreenY(cents[j].y);
+    let g=scctx.createRadialGradient(cx,cy,2,cx,cy,16);
+    g.addColorStop(0,clusterColors[j]); g.addColorStop(1,'transparent');
+    scctx.fillStyle=g; scctx.beginPath(); scctx.arc(cx,cy,16,0,Math.PI*2); scctx.fill();
+    scctx.fillStyle=clusterColors[j]; scctx.strokeStyle='#fff'; scctx.lineWidth=2.5;
+    scctx.beginPath();
+    for(let s=0;s<10;s++){let r=s%2===0?11:4, a=(s*Math.PI/5)-Math.PI/2; let sx=cx+Math.cos(a)*r, sy=cy+Math.sin(a)*r; s===0?scctx.moveTo(sx,sy):scctx.lineTo(sx,sy);}
+    scctx.closePath(); scctx.fill(); scctx.stroke();
+    scctx.fillStyle='#fff'; scctx.font='bold 10px system-ui';
+    scctx.fillText('C'+(j+1), cx+14, cy+4);
+  }
+};
+
+// ═══════════════════════ DIMENSION DEMO (FIXED) ═══════════════════════
+const dc=document.getElementById('dimCanvas'), dctx=dc.getContext('2d'), dW=dc.width, dH=dc.height;
+
+// Deterministic 3D clustered data so the demo is always clear
+const dimData = [
+  // Cluster 0: high Qo, high WHP, low Water-Cut
+  {x:280,y:260,z:0.10},{x:300,y:250,z:0.12},{x:275,y:270,z:0.08},{x:310,y:240,z:0.15},{x:290,y:255,z:0.11},
+  {x:265,y:275,z:0.09},{x:295,y:248,z:0.13},{x:285,y:265,z:0.07},{x:305,y:245,z:0.14},{x:278,y:258,z:0.10},
+  {x:292,y:252,z:0.11},{x:270,y:268,z:0.12},{x:302,y:242,z:0.09},{x:288,y:262,z:0.13},{x:282,y:272,z:0.08},
+  // Cluster 1: low Qo, low WHP, high Water-Cut
+  {x:70,y:80,z:0.85},{x:85,y:65,z:0.90},{x:60,y:90,z:0.82},{x:90,y:55,z:0.88},{x:75,y:75,z:0.86},
+  {x:55,y:95,z:0.83},{x:80,y:70,z:0.89},{x:65,y:85,z:0.87},{x:95,y:60,z:0.91},{x:72,y:78,z:0.84},
+  {x:88,y:62,z:0.92},{x:58,y:92,z:0.81},{x:78,y:72,z:0.85},{x:68,y:88,z:0.86},{x:92,y:58,z:0.90},
+  // Cluster 2: medium Qo, medium WHP, medium Water-Cut
+  {x:180,y:170,z:0.45},{x:195,y:160,z:0.48},{x:170,y:180,z:0.42},{x:200,y:155,z:0.50},{x:185,y:165,z:0.46},
+  {x:175,y:185,z:0.43},{x:190,y:158,z:0.49},{x:182,y:175,z:0.44},{x:198,y:162,z:0.47},{x:178,y:178,z:0.45},
+  {x:192,y:156,z:0.51},{x:172,y:182,z:0.41},{x:188,y:168,z:0.46},{x:183,y:172,z:0.48},{x:196,y:164,z:0.44}
+];
+
+window.drawDimDemo=function(Kval){
+  dctx.clearRect(0,0,dW,dH);
+  dctx.fillStyle='#64748b'; dctx.font='10px system-ui';
+  dctx.fillText('Caudal Qo (bpd) →',dW/2-40,dH-8);
+  dctx.save(); dctx.translate(8,dH/2+30); dctx.rotate(-Math.PI/2); dctx.fillText('Presión WHP (psi) →',0,0); dctx.restore();
+
+  // Draw grid
+  dctx.strokeStyle='rgba(100,116,139,0.08)'; dctx.lineWidth=0.5;
+  for(let x=20;x<dW;x+=40){dctx.beginPath();dctx.moveTo(x,0);dctx.lineTo(x,dH-20);dctx.stroke();}
+  for(let y=0;y<dH-20;y+=40){dctx.beginPath();dctx.moveTo(20,y);dctx.lineTo(dW-10,y);dctx.stroke();}
+
+  for(let d of dimData){
+    let px=20+(d.x/340)*(dW-40), py=(dH-30)-(d.y/300)*(dH-40);
+    let c=d.z<0.25?0:(d.z>0.70?1:2);
+    // Only show this point if Kval includes its cluster
+    if(c<Kval){
+      dctx.fillStyle=clusterColors[c]; dctx.globalAlpha=0.75;
+      dctx.beginPath(); dctx.arc(px,py,5,0,Math.PI*2); dctx.fill();
+      // White glow
+      dctx.fillStyle='rgba(255,255,255,0.1)'; dctx.beginPath(); dctx.arc(px,py,7,0,Math.PI*2); dctx.fill();
+    }
+  }
+  dctx.globalAlpha=1;
+  dctx.fillStyle='#94a3b8'; dctx.font='9px system-ui'; dctx.fillText(`K=${Kval} · 3ª dim (Water-Cut) invisible pero usada por K-Means`,10,dH-20);
+};
+
+window.updateDimDemo=function(){
+  let kv=parseInt(document.getElementById('dimK').value);
+  document.getElementById('dimKVal').textContent=kv;
+  window.drawDimDemo(kv);
+};
+
+// ═══════════════════════ INIT ═══════════════════════
+genData(); drawK(); drawE(); window.updateScaleView(); window.drawDimDemo(3);
+
+let obs=new IntersectionObserver((e)=>{e.forEach(entry=>{if(entry.isIntersecting)entry.target.classList.add('animate');});},{threshold:0.15});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+
+})();
+</script>
+</body>
+</html>
