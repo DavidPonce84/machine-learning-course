@@ -115,14 +115,16 @@ plt.show()
 ```
 
 ### 💡 El Porqué (Importancia Crítica antes de Elegir el Algoritmo):
-- **Identificación de la Geometría de los Pozos:** Antes de correr un algoritmo como K-Means, DBSCAN o Clustering Jerárquico, debemos **observar la estructura espacial de los datos**.
+- **¿Qué representan los Ejes $X$ e $Y$ en la pantalla?:**
+  - **Eje $X$ (Horizontal):** `Qo_bpd` (Caudal de Crudo de 0 a 2,500 bpd).
+  - **Eje $Y$ (Vertical):** `Water_Cut` (Corte de Agua de 0.00 a 1.00).
+  - **Cada punto individual:** Representa un **pozo específico del campo**.
+- **Visualización 2D vs. Espacio Real 5D:**
+  - Para visualizar en una pantalla de computadora, proyectamos el plano 2D de las dos variables operativas más críticas (`Qo` vs `Water_Cut`).
+  - Sin embargo, en el código Python de K-Means, el algoritmo **trabaja en un hiperespacio de 5 Dimensiones simultáneas** ($\mathbb{R}^5$): `Qo_bpd`, `Qw_bpd`, `WHP_psi`, `BHP_psi` y `Water_Cut`.
 - **K-Means vs. DBSCAN (Naturaleza de los Datos):**
   - **K-Means:** Asume de forma estricta que los grupos son **esféricos/convexos** y continuos.
   - **DBSCAN (Cuaderno 2):** No requiere formas esféricas; agrupa por **densidad** y detecta ruido/outliers en formas irregulares o anulares.
-- En este gráfico 2D (`Qo_bpd` vs `Water_Cut`), observamos visualmente **3 aglomeraciones naturales limpias**:
-  1. Pozos con alto `Qo` y bajo `Water_Cut` (esquina inferior derecha).
-  2. Pozos con alto `Water_Cut` (esquina superior).
-  3. Pozos con bajo `Qo` y bajo/medio `Water_Cut` (esquina inferior izquierda).
 
 ### ⚙️ El Cómo (Lógica & Sintaxis):
 - `sns.scatterplot()`: Renderiza el gráfico de puntos 2D. `s=80` define el tamaño de las burbujas, `color="navy"` el tono azul petróleo y `alpha=0.7` agrega transparencia para detectar solapamiento de puntos.
@@ -210,13 +212,26 @@ En la tabla de `df_scaled.describe()`, la fila `std` muestra `1.010` en lugar de
 - `Pandas .describe()` calcula por defecto la **desviación estándar muestral** ($N-1 = 49$, grados de libertad `ddof=1`).
 - Para 50 datos, $\sqrt{50/49} = 1.010$. ¡Es 100% normal y matemáticamente correcto!
 
-### ⚙️ El Cómo (Lógica & Sintaxis):
-- `features = [...]`: Lista explícita de variables continuas operativas (excluyendo identificadores de texto como `Well_ID`).
-- `scaler = StandardScaler()`: Instancia el objeto de escalado de Scikit-Learn.
-- `scaler.fit_transform(df_pozos[features])`:
-  - `fit()`: Aplica la fórmula para calcular la media ($\mu$) y desviación estándar ($\sigma$) de cada columna.
-  - `transform()`: Sustituye cada dato $X$ por su Z-score $\frac{X - \mu}{\sigma}$. Retorna una matriz de NumPy $(50, 5)$.
-- `pd.DataFrame(X_scaled, columns=features)`: Convierte la matriz de NumPy en DataFrame para inspección con `.describe()`.
+### ⚙️ El Cómo (Desglose Minucioso Línea por Línea):
+
+#### 📌 Línea 1: `scaler = StandardScaler()`
+- **`StandardScaler`:** Clase importada de `sklearn.preprocessing`.
+- **`scaler = ...`:** Instancia el objeto estandarizador. En este momento, `scaler` es una "máquina vacía" en memoria lista para aprender la media ($\mu$) y desviación estándar ($\sigma$) de los datos.
+
+#### 📌 Línea 2: `X_scaled = scaler.fit_transform(df_pozos[features])`
+- **`df_pozos[features]`:** Filtra el DataFrame original seleccionando únicamente las 5 columnas numéricas operativas.
+- **`.fit_transform(...)`:** Combina dos acciones clave:
+  - **`fit()`:** Lee las 50 filas de cada columna y calcula su media ($\mu$) y desviación estándar ($\sigma$).
+  - **`transform()`:** Aplica la fórmula $Z = \frac{X - \mu}{\sigma}$ a cada casilla de la tabla.
+- **`X_scaled` (Tipo de Dato):** Almacena el resultado. **Atención:** Scikit-Learn devuelve una **matriz numérica pura de NumPy (`ndarray`)** de $50 \times 5$, no un DataFrame.
+
+#### 📌 Línea 3: `df_scaled = pd.DataFrame(X_scaled, columns=features)`
+- **`pd.DataFrame(...)`:** Constructor de Pandas que convierte la matriz de NumPy de nuevo en un DataFrame estructurado.
+- **`columns=features`:** Le devuelve a la matriz sus 5 encabezados de texto originales (`Qo_bpd`, `Qw_bpd`, `WHP_psi`, `BHP_psi`, `Water_Cut`).
+
+#### 📌 Línea 4: `df_scaled.describe().round(3)`
+- **`.describe()`:** Método de Pandas que calcula las 8 estadísticas descriptivas (`count`, `mean`, `std`, `min`, `25%`, `50%`, `75%`, `max`).
+- **`.round(3)`:** Redondea la tabla resultante a 3 decimales para evitar saturación de flotantes en pantalla, permitiendo validar que las medias hayan quedado en $0.000$ y la desviación en $\approx 1.010$.
 
 ---
 
@@ -346,17 +361,48 @@ df_pozos.groupby('Cluster')[features].mean().round(2)
 ```
 
 ### 💡 El Porqué (Interpretación Física & Valor para la Industria Petrolera):
-- Las etiquetas numéricas ($0, 1, 2$) no dicen nada por sí solas a un ingeniero de yacimientos o de producción.
-- Al calcular el **promedio de las variables físicas reales** (no estandarizadas) por cluster, transformamos la salida de Machine Learning en **decisiones operativas directas**:
-  - 🟢 **Cluster 0 (Pozos de Alto Rendimiento):** Caudales de crudo elevados (`Qo_bpd` $\approx 1800-2200$), bajo corte de agua (`Water_Cut` $< 15\%$) y presiones de fondo (`BHP`) robustas.
-  - 🟡 **Cluster 1 (Pozos con Conificación de Agua / Acuífero Activo):** Alto `Qw_bpd` y `Water_Cut` elevado ($> 60\%$). Requieren intervención de aislamiento de zonas o tratamiento de conificación.
-  - 🔴 **Cluster 2 (Pozos Declinados / Baja Presión):** Presiones de cabeza (`WHP`) y de fondo (`BHP`) muy mermadas, produciendo bajo caudal de fluido. Candidatos prioritarios para optimización o instalación de Sistemas de Levantamiento Artificial (ESP / Gas Lift).
+- Las etiquetas numéricas ($0, 1, 2$) son **identificadores arbitrarios** asignados por el algoritmo K-Means. Para darles valor de negocio, debemos inspeccionar los promedios reales de la tabla de salida:
+  - 🟡 **Cluster 0 (Pozos con Conificación de Agua / Acuífero Activo):** Caudal de agua desproporcionado (`Qw_bpd` $= 1,870.95 \text{ bpd}$) y corte de agua severo (`Water_Cut` $= 0.83$ o $83\%$). Producción de crudo mermada ($370.35 \text{ bpd}$). Requieren intervención inmediata de aislamiento de capas.
+  - 🟢 **Cluster 1 (Pozos de Alto Rendimiento):** Producción masiva de crudo (`Qo_bpd` $= 2,084.64 \text{ bpd}$), muy bajo corte de agua (`Water_Cut` $= 0.14$ o $14\%$) y presiones de fondo muy saludables (`BHP_psi` $= 2,143.19 \text{ psi}$). Son los pozos "estrella" del campo.
+  - 🔴 **Cluster 2 (Pozos Declinados / Baja Presión):** Caudales muy bajos (`Qo_bpd` $= 248.20 \text{ bpd}$) y presiones de cabeza y fondo agotadas (`WHP` $= 110.11 \text{ psi}$, `BHP` $= 1,305.83 \text{ psi}$). Candidatos prioritarios para optimización o instalación de Sistemas de Levantamiento Artificial (BES / Gas Lift).
 
 ### ⚙️ El Cómo (Lógica & Sintaxis):
 - `df_pozos.groupby('Cluster')`: Agrupa los 50 pozos según su cluster asignado.
 - `[features]`: Selecciona únicamente las columnas numéricas de interés operativo (`Qo_bpd`, `Qw_bpd`, `WHP_psi`, `BHP_psi`, `Water_Cut`).
 - `.mean()`: Calcula la media aritmética real de cada parámetro en cada grupo.
 - `.round(2)`: Redondea a 2 decimales para incluirlo limpiamente en reportes ejecutivos.
+
+---
+
+## 🌐 Herramientas Recomendadas para Presentar Datos 5D en Vivo
+
+### 1. TensorFlow Embedding Projector (Online & Gratuito)
+- **URL:** [https://projector.tensorflow.org](https://projector.tensorflow.org)
+- **Descripción:** Desarrollado por Google. Te permite cargar un archivo CSV con tus 5 variables de los pozos y proyectarlos en un espacio 3D interactivo usando PCA o t-SNE. Los estudiantes pueden rotar la nube de datos en 3D y hacer clic en cada pozo.
+
+### 2. Plotly 3D + Color + Tamaño (Gráfico 5D interactivo en Python)
+Puedes mapear 5 dimensiones simultáneas en una sola figura de Plotly:
+- **Eje X:** `Qo_bpd`
+- **Eje Y:** `Water_Cut`
+- **Eje Z:** `BHP_psi`
+- **Color:** `Cluster` (Familia asignada)
+- **Tamaño de Esfera:** `Qw_bpd` (Caudal de Agua)
+
+```python
+import plotly.express as px
+
+fig = px.scatter_3d(
+    df_pozos, 
+    x='Qo_bpd', y='Water_Cut', z='BHP_psi',
+    color='Cluster', size='Qw_bpd',
+    hover_name='Well_ID',
+    title='Visualización 5D de Pozos Petroleros'
+)
+fig.show()
+```
+
+### 3. Gráfico de Coordenadas Paralelas (Parallel Coordinates Plot)
+Muestra 5 ejes verticales paralelos. Cada pozo se dibuja como una línea continua atravesando las 5 variables. Los clusters se aprecian como "mangueras" o haces de cables de colores bien separados.
 
 ---
 
