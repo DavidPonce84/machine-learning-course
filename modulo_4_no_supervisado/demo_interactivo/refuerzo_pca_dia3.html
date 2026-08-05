@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCA — Reducción de Dimensionalidad | Módulo 4 Día 3 · SLB</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--accent:#38bdf8;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--pink:#ec4899;--text:#f8fafc;--muted:#94a3b8;--border:#334155}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.container{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
+.hero{text-align:center;padding:4rem 0 2rem}
+.hero h1{font-size:2.6rem;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero .sub{color:var(--muted);font-size:1.15rem}
+.hero .badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1.2rem;margin-top:1rem;font-size:.9rem;color:var(--accent)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:2rem;margin:2rem 0}
+.section h2{color:var(--accent);font-size:1.5rem;margin-bottom:1rem}
+.section h3{color:var(--gold);font-size:1.1rem;margin:1.2rem 0 .5rem}
+.section p{margin-bottom:.8rem;color:#cbd5e1}
+.callout{border-radius:.8rem;padding:1.2rem;margin:1rem 0;font-size:.95rem}
+.callout.info{background:rgba(56,189,248,0.1);border-left:3px solid var(--accent)}
+.callout.warn{background:rgba(245,158,11,0.1);border-left:3px solid var(--gold)}
+.callout.tip{background:rgba(34,197,94,0.1);border-left:3px solid var(--green)}
+.code-block{background:#0f172a;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
+.viz{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;margin:1rem 0;text-align:center;overflow:hidden}
+.viz canvas{display:block;margin:0 auto}
+.viz-caption{padding:.6rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border)}
+.btn{background:var(--accent);color:#0f172a;border:none;padding:.5rem 1.2rem;border-radius:.5rem;font-weight:600;cursor:pointer;font-size:.9rem;margin:.3rem}
+.btn:hover{opacity:.85}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+.grid-card{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;padding:1.2rem}
+.grid-card h4{color:var(--gold);margin-bottom:.5rem}
+.slider-group{margin:1rem 0}
+.slider-group label{display:block;color:var(--muted);font-size:.85rem}
+.slider-group input[type=range]{width:100%;accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+th{background:rgba(56,189,248,0.15);color:var(--accent);padding:.6rem;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
+#scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:100}
+</style>
+</head>
+<body>
+<div id="scroll-progress"></div>
+<div class="container">
+
+<div class="hero">
+<h1>PCA: Reduccion de Dimensionalidad</h1>
+<p class="sub">De 4 curvas de well logs a 2 componentes que revelan litologia y fluidos</p>
+<span class="badge">Modulo 4 Dia 3 — Schlumberger (SLB) · Instructor: David Ponce</span>
+</div>
+
+<!-- 1. WHY PCA -->
+<div class="section" id="s1">
+<h2>1. El Problema: Demasiadas Dimensiones</h2>
+<p>En los Dias 1 y 2 usamos K-Means y DBSCAN. Pero quedo una duda: <strong>cuando tienes 5, 7 o mas variables, como visualizas los clusters?</strong></p>
+<div class="viz"><canvas id="dimProblemCanvas" width="750" height="340"></canvas>
+<div class="viz-caption">4 curvas de well logs = 4 dimensiones. No podemos graficarlas todas a la vez. Necesitamos reducirlas.</div>
+</div>
+<div class="callout warn">Si simplemente <strong>eliges 2 variables y graficas</strong>, pierdes el ~60% de la informacion. PCA resuelve esto: CREA 2 variables NUEVAS que conservan el ~85-90%.</div>
+</div>
+
+<!-- 2. THE SHADOW ANALOGY -->
+<div class="section" id="s2">
+<h2>2. Analogia: La Sombra que Revela la Forma</h2>
+<p>Tu mano es 3D, su sombra en la pared es 2D. Y solo con la sombra sabes si es mano abierta, puno o gesto de OK. <strong>PCA hace exactamente eso: proyecta tus datos de N dimensiones a una "sombra" 2D, eligiendo el MEJOR angulo.</strong></p>
+<div class="viz"><canvas id="shadowCanvas" width="750" height="360"></canvas>
+<div class="viz-caption">La linea roja = PC1 (direccion de maxima varianza). La azul = PC2 (perpendicular). Los puntos se proyectan sobre estos ejes.</div>
+</div>
+</div>
+
+<!-- 3. PCA STEP BY STEP -->
+<div class="section" id="s3">
+<h2>3. PCA Paso a Paso — Como Funciona</h2>
+<p>Mismo dataset. Mismos puntos. Pero PCA encuentra los EJES que mejor separan los datos.</p>
+<div style="text-align:center;margin:.5rem 0">
+<button class="btn" onclick="pcaStep(1)">1. Datos originales (4D)</button>
+<button class="btn" onclick="pcaStep(2)">2. Encontrar PC1</button>
+<button class="btn" onclick="pcaStep(3)">3. Encontrar PC2</button>
+<button class="btn" onclick="pcaStep(4)">4. Proyectar sobre PC1 y PC2</button>
+</div>
+<div class="viz"><canvas id="pcaStepCanvas" width="750" height="400"></canvas>
+<div class="viz-caption" id="pcaStepCap">Paso 1: 200 puntos en 4 dimensiones. Solo podemos ver 2 de ellas a la vez.</div>
+</div>
+<div class="callout info"><strong>Observa:</strong> PC1 y PC2 NO son variables originales. Son COMBINACIONES de las 4 curvas. PC1 = w1*GR + w2*ILD + w3*RHOB + w4*NPHI. Los pesos w los calcula PCA automaticamente.</div>
+</div>
+
+<!-- 4. VARIANCE EXPLAINED -->
+<div class="section" id="s4">
+<h2>4. Varianza Explicada: Cuanta Informacion Conservo</h2>
+<p>Cada componente principal captura un porcentaje de la variacion total. <strong>PC1 + PC2 tipicamente conservan 80-95% de la informacion.</strong></p>
+<div class="grid-2">
+<div><div class="viz"><canvas id="screeCanvas" width="370" height="280"></canvas></div></div>
+<div>
+<h3>Interpretacion</h3>
+<p>PC1 (67%): Eje LITOLOGICO. Separa arcillas de arenas.</p>
+<p>PC2 (23%): Eje de FLUIDOS. Separa agua de petroleo.</p>
+<p style="color:var(--green);font-weight:bold;">Total conservado: 90%</p>
+<p style="color:var(--muted);font-size:.85rem;">PC3 (8%) y PC4 (2%) son mayormente ruido de medicion.</p>
+</div>
+</div>
+</div>
+
+<!-- 5. PCA vs SELECTING VARIABLES -->
+<div class="section" id="s5">
+<h2>5. PCA NO es "Elegir 2 Variables y Graficarlas"</h2>
+<p>Esta es la confusion mas comun. Veamos la diferencia:</p>
+<div class="grid-2">
+<div>
+<h4 style="color:var(--red)">Elegir GR y RHOB (2 de 4)</h4>
+<div class="viz"><canvas id="select2Canvas" width="360" height="240"></canvas></div>
+<p style="font-size:.8rem;color:var(--red)">Pierdes ILD y NPHI. Clusters mezclados.</p>
+</div>
+<div>
+<h4 style="color:var(--green)">PCA: PC1 y PC2 (combinan LAS 4)</h4>
+<div class="viz"><canvas id="pcaResultCanvas" width="360" height="240"></canvas></div>
+<p style="font-size:.8rem;color:var(--green)">Conservas 90% de info. Clusters nitidos.</p>
+</div>
+</div>
+<div class="callout tip"><strong>Regla:</strong> Seleccionar = botar cartas. PCA = barajar todas y sacar 2 que resumen el mazo completo.</div>
+</div>
+
+<!-- 6. WELL LOGS APPLICATION -->
+<div class="section" id="s6">
+<h2>6. Aplicacion Real: Well Logs 4D a 2D</h2>
+<p>Dataset: <strong>registros_pozo.csv</strong> — 7,000 registros, cada 10 cm desde 1500m a 2200m. Variables: GR, ILD, RHOB, NPHI.</p>
+<div class="viz"><canvas id="welllogsCanvas" width="750" height="380"></canvas>
+<div class="viz-caption" id="wlCap">PC1 vs PC2 coloreado por Gamma Ray. La separacion arcilla/arena es visible inmediatamente.</div>
+</div>
+<div class="slider-group">
+<label>Colorear por: <span id="colorByLabel">Gamma Ray (GR)</span></label>
+<input type="range" min="0" max="3" value="0" id="colorBy" oninput="updateWellLogs()">
+<div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)"><span>GR</span><span>ILD</span><span>RHOB</span><span>NPHI</span></div>
+</div>
+<div class="callout info"><strong>Interpretacion fisica:</strong> PC1 (eje X) separa arcillas (derecha, GR alto) de arenas (izquierda, GR bajo). PC2 (eje Y) separa arenas con agua (abajo, ILD bajo) de arenas con petroleo (arriba, ILD alto). PCA "aprendio" geologia sin que nadie se la ensenara.</div>
+</div>
+
+<!-- 7. K-MEANS ON PCA -->
+<div class="section" id="s7">
+<h2>7. K-Means sobre PCA: Encontrando Litofacies</h2>
+<p>Aplicamos K-Means (K=3) sobre PC1 y PC2. Resultado: 3 litofacies automaticas.</p>
+<div class="viz"><canvas id="faciesCanvas" width="750" height="380"></canvas>
+<div class="viz-caption">Cluster 0 (azul) = arena con petroleo. Cluster 1 (naranja) = arena con agua. Cluster 2 (verde) = arcilla.</div>
+</div>
+<table>
+<tr><th>Facies</th><th>GR (API)</th><th>ILD (ohm-m)</th><th>RHOB (g/cc)</th><th>NPHI (v/v)</th><th>Interpretacion</th></tr>
+<tr><td style="color:#38bdf8">0</td><td>~30</td><td>~35</td><td>~2.35</td><td>~0.20</td><td>Arena con PETROLEO</td></tr>
+<tr><td style="color:#f59e0b">1</td><td>~35</td><td>~5</td><td>~2.40</td><td>~0.18</td><td>Arena con AGUA</td></tr>
+<tr><td style="color:#22c55e">2</td><td>~90</td><td>~2</td><td>~2.55</td><td>~0.10</td><td>ARCILLA (sello)</td></tr>
+</table>
+</div>
+
+<!-- 8. PIPELINE -->
+<div class="section" id="s8">
+<h2>8. El Pipeline PCA Completo</h2>
+<div class="code-block"># PASO 1: Escalar (siempre!)
+from sklearn.preprocessing import StandardScaler
+X_scaled = StandardScaler().fit_transform(df[['GR','ILD','RHOB','NPHI']])
+
+# PASO 2: Aplicar PCA
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+print(f"Varianza conservada: {pca.explained_variance_ratio_.sum():.1%}")
+
+# PASO 3: K-Means sobre PCA
+from sklearn.cluster import KMeans
+df['Facies'] = KMeans(n_clusters=3).fit_predict(X_pca)
+
+# PASO 4: Visualizar en 3D con Plotly
+import plotly.express as px
+px.scatter_3d(df, x='PC1', y='PC2', z='Profundidad_m', color='Facies')</div>
+<div class="callout tip"><strong>PCA + K-Means:</strong> 4 curvas geofisicas, 7,000 registros, 3 litofacies encontradas automaticamente. De datos crudos a interpretacion geologica en 4 lineas de codigo.</div>
+</div>
+
+</div>
+
+<script>
+(function(){
+window.addEventListener('scroll',()=>{
+document.getElementById('scroll-progress').style.width=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight)*100)+'%';
+});
+const CC=['#38bdf8','#f59e0b','#22c55e','#ec4899'];
+
+// ═══════════ 1. DIM PROBLEM ═══════════
+const dp=document.getElementById('dimProblemCanvas'),dpx=dp.getContext('2d'),dpW=dp.width,dpH=dp.height;
+function drawDimProblem(){
+dpx.clearRect(0,0,dpW,dpH);
+// 4 small canvases showing each curve individually
+let curves=[
+{label:'Gamma Ray (GR)',unit:'API',data:[],y:260,h:60,color:'#38bdf8'},
+{label:'Resistividad (ILD)',unit:'ohm-m',data:[],y:180,h:60,color:'#f59e0b'},
+{label:'Densidad (RHOB)',unit:'g/cc',data:[],y:100,h:60,color:'#22c55e'},
+{label:'Porosidad (NPHI)',unit:'v/v',data:[],y:20,h:60,color:'#ec4899'}
+];
+for(let c of curves){
+for(let i=0;i<100;i++)c.data.push(40+Math.random()*(dpW-80));
+dpx.fillStyle='#64748b';dpx.font='9px system-ui';
+dpx.fillText(c.label,10,c.y+12);
+dpx.strokeStyle=c.color;dpx.lineWidth=1.5;dpx.beginPath();
+dpx.moveTo(10,c.y+30);for(let i=0;i<c.data.length;i++)dpx.lineTo(10+i/100*(dpW-20),c.y+30+(Math.sin(i*.2)*15));
+dpx.stroke();
+}
+dpx.fillStyle='#94a3b8';dpx.font='16px system-ui';
+dpx.fillText('?',dpW-50,dpH/2+5);
+dpx.fillText('4 curvas = 4D',dpW-130,dpH/2+5);
+}
+
+// ═══════════ 2. SHADOW ANALOGY ═══════════
+const sc=document.getElementById('shadowCanvas'),scx=sc.getContext('2d'),sW=sc.width,sH=sc.height;
+let shadowAngle=0;
+function drawShadow(){
+scx.clearRect(0,0,sW,sH);
+// Generate 3D-like clustered data
+let pts=[];let seed=42;
+function rnd(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
+for(let c=0;c<3;c++){
+let cx=150+c*220,cy=180+(c-1)*80,cz=50+c*30;
+for(let i=0;i<40;i++)pts.push({x:cx+(rnd()-.5)*100,y:cy+(rnd()-.5)*80,z:cz+(rnd()-.5)*60,tc:c});
+}
+// Compute PCA manually
+let mx=pts.reduce((a,b)=>a+b.x,0)/pts.length,my=pts.reduce((a,b)=>a+b.y,0)/pts.length;
+let vx=0,vy=0;for(let p of pts){vx+=(p.x-mx)*(p.y-my);vy+=(p.x-mx)*(p.x-mx);}
+let angle=Math.atan2(vx,vy)+shadowAngle*Math.PI*2;
+let ca=Math.cos(angle),sa=Math.sin(angle);
+// Draw original points
+for(let p of pts){
+scx.fillStyle=CC[p.tc]+'44';scx.beginPath();scx.arc(p.x,p.y,3,0,Math.PI*2);scx.fill();
+// Projected shadow on PC1
+let proj=p.x*ca+p.y*sa;
+let sx=120+proj*1.5,sy=sH-60+(p.z-60)*.3;
+scx.fillStyle=CC[p.tc]+'88';scx.beginPath();scx.arc(sx,sy,3.5,0,Math.PI*2);scx.fill();
+// Dashed line from original to shadow
+scx.strokeStyle=CC[p.tc]+'22';scx.lineWidth=.5;scx.beginPath();scx.moveTo(p.x,p.y);scx.lineTo(sx,sy);scx.stroke();
+}
+// PC1 and PC2 axes
+scx.strokeStyle='#ef4444';scx.lineWidth=2;scx.beginPath();scx.moveTo(120,sH-60);scx.lineTo(sW-20,sH-60);scx.stroke();
+scx.strokeStyle='#38bdf8';scx.lineWidth=2;scx.setLineDash([4,4]);scx.beginPath();scx.moveTo(120,sH-60);scx.lineTo(120,10);scx.stroke();scx.setLineDash([]);
+scx.fillStyle='#ef4444';scx.font='bold 11px system-ui';scx.fillText('PC1 (maxima varianza)',sW-200,sH-70);
+scx.fillStyle='#38bdf8';scx.font='bold 11px system-ui';scx.fillText('PC2',130,40);
+scx.fillStyle='#94a3b8';scx.font='10px system-ui';scx.fillText('Datos originales (multicolor)',sW-200,20);
+scx.fillText('Proyeccion PCA (colores intensos)',sW-200,35);
+}
+setInterval(()=>{shadowAngle+=.002;if(shadowAngle>1)shadowAngle=0;drawShadow();},40);
+
+// ═══════════ 3. PCA STEP BY STEP ═══════════
+const pc=document.getElementById('pcaStepCanvas'),pcx=pc.getContext('2d'),pW=pc.width,pH=pc.height;
+let pcaPts=[],pcaStepN=1,pcaAngle=0,pcaCenter={x:0,y:0};
+function genPCAData(){
+pcaPts=[];let s=42;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+for(let c=0;c<3;c++){let cx=150+c*220,cy=250+(c-1)*100;for(let i=0;i<50;i++)pcaPts.push({x:cx+(r()-.5)*80,y:cy+(r()-.5)*70,tc:c});}
+// Compute PCA
+let mx=pcaPts.reduce((a,b)=>a+b.x,0)/pcaPts.length,my=pcaPts.reduce((a,b)=>a+b.y,0)/pcaPts.length;
+pcaCenter={x:mx,y:my};
+let vx=0,vy=0;for(let p of pcaPts){vx+=(p.x-mx)*(p.y-my);vy+=(p.x-mx)*(p.x-mx);}
+pcaAngle=Math.atan2(vx,vy);
+}
+function drawPCAStep(){
+pcx.clearRect(0,0,pW,pH);
+let mx=pcaCenter.x,my=pcaCenter.y,ca=Math.cos(pcaAngle),sa=Math.sin(pcaAngle);
+// Grid
+pcx.strokeStyle='rgba(100,116,139,0.08)';pcx.lineWidth=.5;
+for(let x=0;x<pW;x+=40){pcx.beginPath();pcx.moveTo(x,0);pcx.lineTo(x,pH);pcx.stroke();}
+for(let y=0;y<pH;y+=40){pcx.beginPath();pcx.moveTo(0,y);pcx.lineTo(pW,y);pcx.stroke();}
+// Draw points
+for(let p of pcaPts){
+let a=.5;if(pcaStepN>=4){let proj=(p.x-mx)*ca+(p.y-my)*sa;p.x=mx+proj*ca;p.y=my+proj*sa;a=1;}
+pcx.fillStyle=CC[p.tc]+(a>.7?'cc':'44');pcx.beginPath();pcx.arc(p.x,p.y,4,0,Math.PI*2);pcx.fill();
+}
+// PC axes
+if(pcaStepN>=2){
+pcx.strokeStyle='#ef4444';pcx.lineWidth=2.5;
+pcx.beginPath();pcx.moveTo(mx-ca*350,my-sa*350);pcx.lineTo(mx+ca*350,my+sa*350);pcx.stroke();
+pcx.fillStyle='#ef4444';pcx.font='bold 12px system-ui';pcx.fillText('PC1',mx+ca*320,my+sa*320);
+}
+if(pcaStepN>=3){
+let ca2=-sa,sa2=ca;
+pcx.strokeStyle='#38bdf8';pcx.lineWidth=2;pcx.setLineDash([5,3]);
+pcx.beginPath();pcx.moveTo(mx-ca2*250,my-sa2*250);pcx.lineTo(mx+ca2*250,my+sa2*250);pcx.stroke();pcx.setLineDash([]);
+pcx.fillStyle='#38bdf8';pcx.font='bold 11px system-ui';pcx.fillText('PC2',mx+ca2*220,my+sa2*220);
+}
+let caps=['','Paso 1: Datos originales en 4D. Solo vemos 2 de las 4 dimensiones.','Paso 2: PC1 (rojo) = direccion de MAXIMA varianza. Captura el 67% de la informacion.','Paso 3: PC2 (azul) = segunda direccion, PERPENDICULAR a PC1. Captura el 23%.','Paso 4: Puntos PROYECTADOS sobre PC1 y PC2. Colores mas intensos = datos en el nuevo espacio 2D.'];
+document.getElementById('pcaStepCap').textContent=caps[pcaStepN];
+}
+window.pcaStep=function(n){pcaStepN=n;drawPCAStep();};
+
+// ═══════════ 4. SCREE PLOT ═══════════
+const src=document.getElementById('screeCanvas'),srx=src.getContext('2d'),srW=src.width,srH=src.height;
+function drawScree(){
+srx.clearRect(0,0,srW,srH);
+let vals=[67,23,8,2],labels=['PC1','PC2','PC3','PC4'],cols=['#38bdf8','#f59e0b','#94a3b8','#64748b'];
+let bw=50,gap=15,totalW=vals.length*bw+(vals.length-1)*gap,startX=(srW-totalW)/2;
+for(let i=0;i<vals.length;i++){
+let h=vals[i]/100*(srH-60);
+srx.fillStyle=cols[i];srx.fillRect(startX+i*(bw+gap),srH-40-h,bw,h);
+srx.fillStyle='#fff';srx.font='bold 10px system-ui';srx.textAlign='center';
+srx.fillText(vals[i]+'%',startX+i*(bw+gap)+bw/2,srH-42-h);
+srx.fillText(labels[i],startX+i*(bw+gap)+bw/2,srH-14);
+}
+srx.fillStyle='#22c55e';srx.font='bold 13px system-ui';srx.textAlign='center';
+srx.fillText('Total: 90%',srW/2,20);
+}
+
+// ═══════════ 5. SELECT 2 vs PCA ═══════════
+const s2c=document.getElementById('select2Canvas'),s2x=s2c.getContext('2d');
+const prc=document.getElementById('pcaResultCanvas'),prx=prc.getContext('2d');
+function drawComparison(){
+// Select 2: GR vs RHOB — clusters overlap
+s2x.clearRect(0,0,360,240);
+s2x.fillStyle='#64748b';s2x.font='9px system-ui';s2x.fillText('GR (API)',150,230);s2x.fillText('RHOB (g/cc)',5,110);
+let s2pts=[[80,180,15],[200,120,18],[280,60,16]];
+s2pts.forEach((c,ci)=>{for(let i=0;i<25;i++){let px=c[0]+(Math.random()-.5)*c[2]*3;let py=c[1]+(Math.random()-.5)*c[2]*3;s2x.fillStyle=CC[ci]+'88';s2x.beginPath();s2x.arc(px,py,4,0,Math.PI*2);s2x.fill();}});
+// PCA result: PC1 vs PC2 — clear separation
+prx.clearRect(0,0,360,240);
+prx.fillStyle='#64748b';prx.font='9px system-ui';prx.fillText('PC1 (Litologia)',120,230);prx.fillText('PC2 (Fluidos)',5,110);
+let prpts=[[80,180,12],[200,70,14],[300,150,13]];
+prpts.forEach((c,ci)=>{for(let i=0;i<25;i++){let px=c[0]+(Math.random()-.5)*c[2]*2.5;let py=c[1]+(Math.random()-.5)*c[2]*2.5;prx.fillStyle=CC[ci]+'cc';prx.beginPath();prx.arc(px,py,4,0,Math.PI*2);prx.fill();}});
+}
+
+// ═══════════ 6. WELL LOGS ═══════════
+const wc=document.getElementById('welllogsCanvas'),wcx=wc.getContext('2d'),wW=wc.width,wH=wc.height;
+let wlPts=[],wlVals=[];
+function genWLData(){
+wlPts=[];wlVals=[];let s=99;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+// Cluster 0: sand with oil — low GR, high ILD
+for(let i=0;i<250;i++){
+let gr=20+r()*25,ild=20+r()*30,rhob=2.25+r()*.2,nphi=.15+r()*.12;
+wlVals.push([gr,ild,rhob,nphi,0]);
+// Project to PCA using approximate loadings
+let pc1=gr*.5-ild*.3+rhob*.2+nphi*.4, pc2=-gr*.1+ild*.6+rhob*.3-nphi*.15;
+wlPts.push({x:pc1,y:pc2,tc:0,vals:[gr,ild,rhob,nphi]});
+}
+// Cluster 1: sand with water — low GR, low ILD
+for(let i=0;i<200;i++){
+let gr=25+r()*30,ild=2+r()*6,rhob=2.35+r()*.2,nphi=.12+r()*.12;
+wlVals.push([gr,ild,rhob,nphi,1]);
+let pc1=gr*.5-ild*.3+rhob*.2+nphi*.4, pc2=-gr*.1+ild*.6+rhob*.3-nphi*.15;
+wlPts.push({x:pc1,y:pc2,tc:1,vals:[gr,ild,rhob,nphi]});
+}
+// Cluster 2: shale — high GR, low ILD
+for(let i=0;i<200;i++){
+let gr=75+r()*35,ild=1+r()*3,rhob=2.5+r()*.15,nphi=.05+r()*.1;
+wlVals.push([gr,ild,rhob,nphi,2]);
+let pc1=gr*.5-ild*.3+rhob*.2+nphi*.4, pc2=-gr*.1+ild*.6+rhob*.3-nphi*.15;
+wlPts.push({x:pc1,y:pc2,tc:2,vals:[gr,ild,rhob,nphi]});
+}
+}
+function drawWellLogs(colorIdx){
+wcx.clearRect(0,0,wW,wH);
+// Scale to canvas
+let minX=Math.min(...wlPts.map(p=>p.x)),maxX=Math.max(...wlPts.map(p=>p.x));
+let minY=Math.min(...wlPts.map(p=>p.y)),maxY=Math.max(...wlPts.map(p=>p.y));
+let rX=maxX-minX||1,rY=maxY-minY||1;
+let pad={l:60,r:20,t:20,b:40},pw=wW-pad.l-pad.r,ph=wH-pad.t-pad.b;
+wcx.fillStyle='#64748b';wcx.font='10px system-ui';
+wcx.fillText('PC1 (Litologia: Arcilla -> Arena)',wW/2-80,wH-6);
+wcx.save();wcx.translate(10,wH/2+20);wcx.rotate(-Math.PI/2);wcx.fillText('PC2 (Fluidos: Agua -> Petroleo)',0,0);wcx.restore();
+
+let valNames=['GR (API)','ILD (ohm-m)','RHOB (g/cc)','NPHI (v/v)'];
+let valRanges=[[10,120],[0.5,60],[2.1,2.7],[0,0.35]];
+for(let p of wlPts){
+let sx=pad.l+((p.x-minX)/rX)*pw, sy=pad.t+ph-((p.y-minY)/rY)*ph;
+if(colorIdx===0){let v=p.vals[0],t=(v-10)/110;wcx.fillStyle=`rgb(${Math.floor(255*t)},${Math.floor(255*(1-t))},50)`;}
+else if(colorIdx===1){let v=p.vals[1],t=Math.min(1,v/60);wcx.fillStyle=`rgb(${Math.floor(100+155*t)},${Math.floor(100+100*t)},${Math.floor(200-100*t)})`;}
+else if(colorIdx===2){let v=p.vals[2],t=(v-2.1)/.6;wcx.fillStyle=`rgb(${Math.floor(50+200*t)},${Math.floor(50+100*t)},${Math.floor(200-150*t)})`;}
+else{let v=p.vals[3],t=v/.35;wcx.fillStyle=`rgb(${Math.floor(200*t)},${Math.floor(100+100*t)},${Math.floor(200-100*t)})`;}
+wcx.globalAlpha=.6;wcx.beginPath();wcx.arc(sx,sy,2.5,0,Math.PI*2);wcx.fill();
+}
+wcx.globalAlpha=1;
+wcx.fillStyle='#94a3b8';wcx.font='9px system-ui';
+wcx.fillText('Color: '+valNames[colorIdx]+' ('+valRanges[colorIdx][0]+' - '+valRanges[colorIdx][1]+')',pad.l,pad.t-4);
+document.getElementById('colorByLabel').textContent=valNames[colorIdx];
+}
+window.updateWellLogs=function(){
+let idx=parseInt(document.getElementById('colorBy').value);
+drawWellLogs(idx);
+};
+
+// ═══════════ 7. FACIES ═══════════
+const fc=document.getElementById('faciesCanvas'),fcx=fc.getContext('2d'),fW=fc.width,fH=fc.height;
+function drawFacies(){
+fcx.clearRect(0,0,fW,fH);
+let minX=Math.min(...wlPts.map(p=>p.x)),maxX=Math.max(...wlPts.map(p=>p.x));
+let minY=Math.min(...wlPts.map(p=>p.y)),maxY=Math.max(...wlPts.map(p=>p.y));
+let rX=maxX-minX||1,rY=maxY-minY||1;
+let pad={l:60,r:20,t:20,b:40},pw=fW-pad.l-pad.r,ph=fH-pad.t-pad.b;
+fcx.fillStyle='#64748b';fcx.font='10px system-ui';
+fcx.fillText('PC1 (Litologia)',fW/2-40,fH-6);
+fcx.save();fcx.translate(10,fH/2+20);fcx.rotate(-Math.PI/2);fcx.fillText('PC2 (Fluidos)',0,0);fcx.restore();
+// Draw by true cluster
+for(let p of wlPts){
+let sx=pad.l+((p.x-minX)/rX)*pw, sy=pad.t+ph-((p.y-minY)/rY)*ph;
+fcx.fillStyle=CC[p.tc]+'aa';fcx.beginPath();fcx.arc(sx,sy,3,0,Math.PI*2);fcx.fill();
+}
+// Draw K-Means centroids (approximate)
+let cents=[[pad.l+pw*.75,pad.t+ph*.78],[pad.l+pw*.2,pad.t+ph*.3],[pad.l+pw*.45,pad.t+ph*.15]];
+cents.forEach((c,j)=>{
+fcx.fillStyle=CC[j];fcx.strokeStyle='#fff';fcx.lineWidth=2;fcx.beginPath();
+for(let s=0;s<10;s++){let r=s%2===0?9:3,a=(s*Math.PI/5)-Math.PI/2;s===0?fcx.moveTo(c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r):fcx.lineTo(c[0]+Math.cos(a)*r,c[1]+Math.sin(a)*r);}
+fcx.closePath();fcx.fill();fcx.stroke();
+fcx.fillStyle='#fff';fcx.font='bold 10px system-ui';fcx.fillText('C'+(j+1),c[0]+12,c[1]+4);
+});
+}
+
+// ═══════════ INIT ═══════════
+drawDimProblem();drawShadow();genPCAData();drawPCAStep();drawScree();drawComparison();genWLData();drawWellLogs(0);drawFacies();
+})();
+</script>
+</body>
+</html>
