@@ -74,10 +74,11 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <h2>3. PCA Paso a Paso — Como Funciona</h2>
 <p>Mismo dataset. Mismos puntos. Pero PCA encuentra los EJES que mejor separan los datos.</p>
 <div style="text-align:center;margin:.5rem 0">
-<button class="btn" onclick="pcaStep(1)">1. Datos originales (4D)</button>
+<button class="btn" onclick="pcaStep(1)">1. Datos originales</button>
 <button class="btn" onclick="pcaStep(2)">2. Encontrar PC1</button>
 <button class="btn" onclick="pcaStep(3)">3. Encontrar PC2</button>
-<button class="btn" onclick="pcaStep(4)">4. Proyectar sobre PC1 y PC2</button>
+<button class="btn" onclick="pcaStep(4)">4. Proyectar</button>
+<button class="btn" onclick="pcaReset()" style="background:transparent;border:1px solid var(--accent);color:var(--accent)">Reiniciar</button>
 </div>
 <div class="viz"><canvas id="pcaStepCanvas" width="750" height="400"></canvas>
 <div class="viz-caption" id="pcaStepCap">Paso 1: 200 puntos en 4 dimensiones. Solo podemos ver 2 de ellas a la vez.</div>
@@ -245,44 +246,55 @@ setInterval(()=>{shadowAngle+=.002;if(shadowAngle>1)shadowAngle=0;drawShadow();}
 
 // ═══════════ 3. PCA STEP BY STEP ═══════════
 const pc=document.getElementById('pcaStepCanvas'),pcx=pc.getContext('2d'),pW=pc.width,pH=pc.height;
-let pcaPts=[],pcaStepN=1,pcaAngle=0,pcaCenter={x:0,y:0};
+let pcaPts=[],pcaPtsOrig=[],pcaStepN=1,pcaAngle=0,pcaCenter={x:0,y:0};
 function genPCAData(){
-pcaPts=[];let s=42;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
-for(let c=0;c<3;c++){let cx=150+c*220,cy=250+(c-1)*100;for(let i=0;i<50;i++)pcaPts.push({x:cx+(r()-.5)*80,y:cy+(r()-.5)*70,tc:c});}
-// Compute PCA
+pcaPts=[];pcaPtsOrig=[];let s=42;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+for(let c=0;c<3;c++){let cx=150+c*220,cy=250+(c-1)*100;for(let i=0;i<50;i++){let px=cx+(r()-.5)*80,py=cy+(r()-.5)*70;pcaPts.push({x:px,y:py,tc:c,ox:px,oy:py});pcaPtsOrig.push({x:px,y:py,tc:c});}}
+// Compute PCA angle from covariance
 let mx=pcaPts.reduce((a,b)=>a+b.x,0)/pcaPts.length,my=pcaPts.reduce((a,b)=>a+b.y,0)/pcaPts.length;
 pcaCenter={x:mx,y:my};
-let vx=0,vy=0;for(let p of pcaPts){vx+=(p.x-mx)*(p.y-my);vy+=(p.x-mx)*(p.x-mx);}
-pcaAngle=Math.atan2(vx,vy);
+let covXY=0,covXX=0;for(let p of pcaPts){covXY+=(p.x-mx)*(p.y-my);covXX+=(p.x-mx)*(p.x-mx);}
+pcaAngle=Math.atan2(covXY,covXX);
 }
 function drawPCAStep(){
 pcx.clearRect(0,0,pW,pH);
 let mx=pcaCenter.x,my=pcaCenter.y,ca=Math.cos(pcaAngle),sa=Math.sin(pcaAngle);
+let ca2=-sa,sa2=ca; // PC2 = perpendicular a PC1
 // Grid
 pcx.strokeStyle='rgba(100,116,139,0.08)';pcx.lineWidth=.5;
 for(let x=0;x<pW;x+=40){pcx.beginPath();pcx.moveTo(x,0);pcx.lineTo(x,pH);pcx.stroke();}
 for(let y=0;y<pH;y+=40){pcx.beginPath();pcx.moveTo(0,y);pcx.lineTo(pW,y);pcx.stroke();}
 // Draw points
 for(let p of pcaPts){
-let a=.5;if(pcaStepN>=4){let proj=(p.x-mx)*ca+(p.y-my)*sa;p.x=mx+proj*ca;p.y=my+proj*sa;a=1;}
-pcx.fillStyle=CC[p.tc]+(a>.7?'cc':'44');pcx.beginPath();pcx.arc(p.x,p.y,4,0,Math.PI*2);pcx.fill();
+let sx=p.x,sy=p.y,alpha=.5;
+if(pcaStepN>=4){
+// Project onto BOTH PC1 and PC2 = full 2D projection
+let proj1=(p.ox-mx)*ca+(p.oy-my)*sa;   // component along PC1
+let proj2=(p.ox-mx)*ca2+(p.oy-my)*sa2; // component along PC2
+sx=mx+proj1*ca+proj2*ca2;
+sy=my+proj1*sa+proj2*sa2;
+alpha=1;
+}
+pcx.fillStyle=CC[p.tc]+(alpha>.7?'cc':'44');pcx.beginPath();pcx.arc(sx,sy,4,0,Math.PI*2);pcx.fill();
+// Draw guideline from original to projected in step 4
+if(pcaStepN>=4){pcx.strokeStyle=CC[p.tc]+'22';pcx.lineWidth=.5;pcx.beginPath();pcx.moveTo(p.ox,p.oy);pcx.lineTo(sx,sy);pcx.stroke();}
 }
 // PC axes
 if(pcaStepN>=2){
 pcx.strokeStyle='#ef4444';pcx.lineWidth=2.5;
-pcx.beginPath();pcx.moveTo(mx-ca*350,my-sa*350);pcx.lineTo(mx+ca*350,my+sa*350);pcx.stroke();
-pcx.fillStyle='#ef4444';pcx.font='bold 12px system-ui';pcx.fillText('PC1',mx+ca*320,my+sa*320);
+pcx.beginPath();pcx.moveTo(mx-ca*380,my-sa*380);pcx.lineTo(mx+ca*380,my+sa*380);pcx.stroke();
+pcx.fillStyle='#ef4444';pcx.font='bold 12px system-ui';pcx.fillText('PC1',mx+ca*340,my+sa*340);
 }
 if(pcaStepN>=3){
-let ca2=-sa,sa2=ca;
 pcx.strokeStyle='#38bdf8';pcx.lineWidth=2;pcx.setLineDash([5,3]);
-pcx.beginPath();pcx.moveTo(mx-ca2*250,my-sa2*250);pcx.lineTo(mx+ca2*250,my+sa2*250);pcx.stroke();pcx.setLineDash([]);
-pcx.fillStyle='#38bdf8';pcx.font='bold 11px system-ui';pcx.fillText('PC2',mx+ca2*220,my+sa2*220);
+pcx.beginPath();pcx.moveTo(mx-ca2*280,my-sa2*280);pcx.lineTo(mx+ca2*280,my+sa2*280);pcx.stroke();pcx.setLineDash([]);
+pcx.fillStyle='#38bdf8';pcx.font='bold 11px system-ui';pcx.fillText('PC2',mx+ca2*250,my+sa2*250);
 }
-let caps=['','Paso 1: Datos originales en 4D. Solo vemos 2 de las 4 dimensiones.','Paso 2: PC1 (rojo) = direccion de MAXIMA varianza. Captura el 67% de la informacion.','Paso 3: PC2 (azul) = segunda direccion, PERPENDICULAR a PC1. Captura el 23%.','Paso 4: Puntos PROYECTADOS sobre PC1 y PC2. Colores mas intensos = datos en el nuevo espacio 2D.'];
+let caps=['','Paso 1: Datos originales en 4D. Solo vemos 2 de las 4 dimensiones.','Paso 2: PC1 (rojo) = direccion de MAXIMA varianza. Captura el 67% de la informacion.','Paso 3: PC2 (azul) = segunda direccion, PERPENDICULAR a PC1. Captura el 23%.','Paso 4: Puntos PROYECTADOS sobre PC1 y PC2. Lineas grises = desplazamiento de cada punto al nuevo espacio 2D.'];
 document.getElementById('pcaStepCap').textContent=caps[pcaStepN];
 }
 window.pcaStep=function(n){pcaStepN=n;drawPCAStep();};
+window.pcaReset=function(){pcaStepN=1;for(let i=0;i<pcaPts.length;i++){pcaPts[i].x=pcaPts[i].ox;pcaPts[i].y=pcaPts[i].oy;}drawPCAStep();};
 
 // ═══════════ 4. SCREE PLOT ═══════════
 const src=document.getElementById('screeCanvas'),srx=src.getContext('2d'),srW=src.width,srH=src.height;
