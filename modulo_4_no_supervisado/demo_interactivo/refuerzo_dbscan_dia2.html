@@ -109,17 +109,34 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <div class="callout warn"><strong>⚠️ Regla:</strong> ε antes del codo → casi todo ruido. ε después → todo un solo cluster. El codo es el balance.</div>
 </div>
 
-<!-- ═══════════ 5. DBSCAN vs K-MEANS ═══════════ -->
+<!-- ═══════════ 5. DOS ESCENARIOS ═══════════ -->
 <div class="section" id="s5">
-<h2>⚔️ 5. DBSCAN vs K-Means — Comparativa Visual</h2>
-<p><strong style="color:var(--gold)">Mismos datos. Dos algoritmos. Resultados completamente distintos.</strong> Desliza para ver la diferencia:</p>
-<div class="slider-group">
-<label>🔄 <span style="color:var(--accent)">K-Means (K=3)</span> ⟷ <span style="color:var(--gold)">DBSCAN (ε=40, MinPts=4)</span> — <span id="compLabel" style="color:var(--gold)">K-Means</span></label>
-<input type="range" min="0" max="100" value="0" id="compSlider" oninput="updateComp()">
+<h2>⚔️ 5. ¿Cuándo usar K-Means y cuándo DBSCAN? — 2 Escenarios</h2>
+<p>No hay un algoritmo "mejor". Depende de tus DATOS. Aquí tienes <strong>dos escenarios opuestos</strong>:</p>
+
+<div class="grid-2">
+<div style="text-align:center;">
+<h4 style="color:var(--accent)">🔵 Escenario A: Datos LIMPIOS y ESFÉRICOS</h4>
+<div class="viz"><canvas id="scenarioKmCanvas" width="360" height="280"></canvas></div>
+<p style="font-size:.8rem;color:var(--accent);margin-top:.3rem;"><strong>Gana K-Means.</strong> Rápido, simple, clusters compactos.</p>
 </div>
-<div class="viz"><canvas id="compCanvas" width="750" height="400"></canvas>
-<div class="viz-caption" id="compCap">🔵 K-Means: Fuerza 3 clusters esféricos. Los outliers contaminan el centroide del cluster verde.</div>
+<div style="text-align:center;">
+<h4 style="color:var(--gold)">🟡 Escenario B: Datos con RUIDO y FORMAS IRREGULARES</h4>
+<div class="viz"><canvas id="scenarioDbCanvas" width="360" height="280"></canvas></div>
+<p style="font-size:.8rem;color:var(--gold);margin-top:.3rem;"><strong>Gana DBSCAN.</strong> Aísla outliers, encuentra formas reales.</p>
 </div>
+</div>
+
+<h3>📋 Guía Rápida de Decisión</h3>
+<table>
+<tr><th>Pregunta</th><th>Si la respuesta es SÍ</th><th>Si la respuesta es NO</th></tr>
+<tr><td>¿Mis datos tienen outliers o sensores dañados?</td><td style="color:var(--gold)">→ DBSCAN</td><td style="color:var(--accent)">→ K-Means</td></tr>
+<tr><td>¿Sé exactamente cuántos grupos hay?</td><td style="color:var(--accent)">→ K-Means</td><td style="color:var(--gold)">→ DBSCAN</td></tr>
+<tr><td>¿Mis clusters tienen formas raras (no esféricas)?</td><td style="color:var(--gold)">→ DBSCAN</td><td style="color:var(--accent)">→ K-Means</td></tr>
+<tr><td>¿Necesito velocidad con muchos datos?</td><td style="color:var(--accent)">→ K-Means</td><td style="color:var(--gold)">→ DBSCAN</td></tr>
+<tr><td>¿Quiero detectar automáticamente datos corruptos?</td><td style="color:var(--gold)">→ DBSCAN</td><td style="color:var(--accent)">→ K-Means</td></tr>
+</table>
+<div class="callout tip"><strong>💡 Regla práctica petrolera:</strong> ¿Datos de 50 pozos limpios? K-Means. ¿Telemetría SCADA con interferencia? DBSCAN. ¿Well logs para litofacies? K-Means sobre PCA (Día 3).</div>
 </div>
 
 <!-- ═══════════ 6. CÓDIGO ═══════════ -->
@@ -212,14 +229,14 @@ setInterval(()=>{kfT=(kfT+1)%90;drawKmeansFail()},50);
 
 // ═══════════ 2. DBSCAN STEP-BY-STEP ═══════════
 const dc=document.getElementById('dbscanCanvas'),dctx=dc.getContext('2d'),dW=dc.width,dH=dc.height;
-const EPS=40,MINP=4;let dPts=[],dAss=[],dCore=[],dStep=0,dClusters=[];
+const EPS=40,MINP=4;let dPts=[],dAss=[],dCore=[],dIsBorder=[],dStep=0,dClusters=[];
 
 function genDBData(){
 dPts=[];let cl=[[100,100,30,35],[380,290,25,30],[600,120,35,28]];
 cl.forEach((c,ci)=>{for(let i=0;i<55;i++)dPts.push({x:c[0]+(Math.random()-.5)*c[2]*2.5,y:c[1]+(Math.random()-.5)*c[3]*2.5,tc:ci});});
 for(let i=dPts.length;i<180;i++)dPts.push({x:60+Math.random()*(dW-120),y:40+Math.random()*(dH-80),tc:-1});
 for(let i=0;i<15;i++)dPts.push({x:200+Math.random()*350,y:80+Math.random()*200,tc:-1});
-dAss=new Array(dPts.length).fill(-1);dCore=new Array(dPts.length).fill(false);dClusters=[];dStep=0;updateDSteps(0);
+dAss=new Array(dPts.length).fill(-1);dCore=new Array(dPts.length).fill(false);dIsBorder=new Array(dPts.length).fill(false);dClusters=[];dStep=0;updateDSteps(0);
 }
 
 function findCore(){
@@ -238,9 +255,20 @@ for(let j=0;j<dPts.length;j++){if(visited.has(j))continue;let dx=dPts[ci].x-dPts
 }
 dClusters.push(cluster);
 }
-// Assign border
+// Assign core points to their cluster
 for(let ci=0;ci<dClusters.length;ci++){for(let i of dClusters[ci])dAss[i]=ci;}
-for(let i=0;i<dPts.length;i++){if(dAss[i]>=0)continue;for(let ci=0;ci<dClusters.length;ci++){for(let j of dClusters[ci]){let dx=dPts[i].x-dPts[j].x,dy=dPts[i].y-dPts[j].y;if(dx*dx+dy*dy<=EPS*EPS){dAss[i]=ci;break;}}if(dAss[i]>=0)break;}}
+// Find and assign border points (points within EPS of a core but not core themselves)
+dIsBorder.fill(false);
+for(let i=0;i<dPts.length;i++){
+if(dAss[i]>=0)continue; // already assigned as core
+for(let ci=0;ci<dClusters.length;ci++){
+for(let j of dClusters[ci]){
+let dx=dPts[i].x-dPts[j].x,dy=dPts[i].y-dPts[j].y;
+if(dx*dx+dy*dy<=EPS*EPS){dAss[i]=ci;dIsBorder[i]=true;break;}
+}
+if(dAss[i]>=0)break;
+}
+}
 }
 
 function drawDBSCAN(){
@@ -255,10 +283,14 @@ dctx.save();dctx.translate(10,dH/2+30);dctx.rotate(-Math.PI/2);dctx.fillText('Ca
 for(let i=0;i<dPts.length;i++){
 let p=dPts[i],a=dAss[i],r=4;
 if(dStep>=1&&dCore[i])r=6;
+if(dStep>=3&&dIsBorder[i])r=5;
 if(dStep>=4&&a===-1)r=5;
 if(dStep>=2&&a>=0){dctx.fillStyle=CC[a%CC.length]+'cc'}else if(dStep>=1&&dCore[i]){dctx.fillStyle=CC[4]+'cc'}else{dctx.fillStyle='#475569'}
 dctx.beginPath();dctx.arc(p.x,p.y,r,0,Math.PI*2);dctx.fill();
+// Core points: white ring
 if(dStep>=1&&dCore[i]){dctx.strokeStyle='#fff';dctx.lineWidth=1.5;dctx.beginPath();dctx.arc(p.x,p.y,r+2,0,Math.PI*2);dctx.stroke();}
+// Border points: dashed orange ring (visible and distinct!)
+if(dStep>=3&&dIsBorder[i]){dctx.strokeStyle='#f59e0b';dctx.lineWidth=2;dctx.setLineDash([3,2]);dctx.beginPath();dctx.arc(p.x,p.y,r+4,0,Math.PI*2);dctx.stroke();dctx.setLineDash([]);}
 }
 // Draw epsilon circles on some core points
 if(dStep>=1){for(let i=0;i<dPts.length&&i<200;i++){if(dCore[i]&&i%15===0){dctx.strokeStyle=CC[4]+'44';dctx.lineWidth=1;dctx.beginPath();dctx.arc(dPts[i].x,dPts[i].y,EPS,0,Math.PI*2);dctx.stroke();}}}
@@ -286,7 +318,13 @@ window.dbscanReset=function(){genDBData();drawDBSCAN();};
 const kc=document.getElementById('kdistCanvas'),kcx=kc.getContext('2d'),kW=kc.width,kH=kc.height;
 let kdists=[],kh=-1;
 function genKDists(){
-kdists=[];for(let i=0;i<300;i++){let d;if(i<200)d=Math.random()*.15+.02;else if(i<260)d=.15+Math.random()*.2;else if(i<285)d=.35+Math.random()*.4;else d=.75+Math.random()*2.5;}
+kdists=[];
+// Generate a clearer elbow: dense zone → sharp transition → sparse zone
+for(let i=0;i<180;i++)kdists.push(0.04+Math.random()*0.06);      // very dense (0.04-0.10)
+for(let i=0;i<40;i++)kdists.push(0.10+Math.random()*0.08);       // transition zone (0.10-0.18)
+for(let i=0;i<30;i++)kdists.push(0.18+Math.random()*0.15);       // elbow zone (0.18-0.33)
+for(let i=0;i<30;i++)kdists.push(0.33+Math.random()*0.4);        // post-elbow (0.33-0.73)
+for(let i=0;i<20;i++)kdists.push(0.73+Math.random()*1.5);        // noise zone (0.73-2.23)
 kdists.sort((a,b)=>a-b);
 }
 function drawKDists(){
@@ -328,70 +366,53 @@ let p={l:60},pw=kW-p.l-30;kh=Math.floor((mx-p.l)/pw*kdists.length);kh=Math.max(0
 });
 kc.addEventListener('mouseleave',()=>{kh=-1;drawKDists();});
 
-// ═══════════ 4. DBSCAN vs KMEANS COMPARISON ═══════════
-const ccv=document.getElementById('compCanvas'),ccx=ccv.getContext('2d'),cW=ccv.width,cH=ccv.height;
-let cData=[], kmCents=null, dbClust=null, dbCore=null;
-function genCompData(){
-cData=[];let cl=[[120,280,25,30],[380,100,22,28],[600,220,30,25]];
-cl.forEach((c,ci)=>{for(let i=0;i<50;i++)cData.push({x:c[0]+(Math.random()-.5)*c[2]*2.5,y:c[1]+(Math.random()-.5)*c[3]*2.5,tc:ci});});
-for(let i=0;i<25;i++)cData.push({x:60+Math.random()*680,y:40+Math.random()*320,tc:-1});
-
+// ═══════════ 4. TWO SCENARIOS ═══════════
+// Scenario A: K-Means wins — clean spherical data
+const skm=document.getElementById('scenarioKmCanvas'),skx=skm.getContext('2d');
+function drawScenarioKm(){
+skx.clearRect(0,0,360,280);
+skx.fillStyle='#64748b';skx.font='10px system-ui';skx.fillText('Variable 1 →',130,272);
+skx.save();skx.translate(8,120);skx.rotate(-Math.PI/2);skx.fillText('Variable 2 →',0,0);skx.restore();
+let cl=[[80,200,20],[200,80,22],[300,190,18]];
+let pts=[];cl.forEach((c,ci)=>{for(let i=0;i<30;i++)pts.push({x:c[0]+(Math.random()-.5)*c[2]*2,y:c[1]+(Math.random()-.5)*c[2]*2,tc:ci});});
+let cents=cl.map(c=>({x:c[0],y:c[1]}));
 // Run K-Means
-kmCents=cl.map(c=>({x:c[0],y:c[1]}));
-for(let iter=0;iter<10;iter++){let sums=[[0,0,0],[0,0,0],[0,0,0]];for(let p of cData){let md=1e9,b=0;for(let j=0;j<3;j++){let d=(p.x-kmCents[j].x)**2+(p.y-kmCents[j].y)**2;if(d<md){md=d;b=j;}}sums[b][0]+=p.x;sums[b][1]+=p.y;sums[b][2]++;}
-for(let j=0;j<3;j++){if(sums[j][2]>0)kmCents[j]={x:sums[j][0]/sums[j][2],y:sums[j][1]/sums[j][2]};}}
-
-// Run DBSCAN
-let EPSc=38;dbCore=new Array(cData.length).fill(false);
-for(let i=0;i<cData.length;i++){let n=0;for(let j=0;j<cData.length;j++){if(i!==j){let dx=cData[i].x-cData[j].x,dy=cData[i].y-cData[j].y;if(dx*dx+dy*dy<=EPSc*EPSc)n++;}}dbCore[i]=n>=4;}
-dbClust=new Array(cData.length).fill(-1);let vis=new Set(),cid=0;
-for(let i=0;i<cData.length;i++){if(!dbCore[i]||vis.has(i))continue;let stack=[i];vis.add(i);while(stack.length>0){let ci=stack.pop();dbClust[ci]=cid;for(let j=0;j<cData.length;j++){if(vis.has(j))continue;let dx=cData[ci].x-cData[j].x,dy=cData[ci].y-cData[j].y;if(dx*dx+dy*dy<=EPSc*EPSc){vis.add(j);if(dbCore[j])stack.push(j);}}}cid++;}
-for(let i=0;i<cData.length;i++){if(dbClust[i]>=0)continue;for(let j=0;j<cData.length;j++){if(dbClust[j]>=0){let dx=cData[i].x-cData[j].x,dy=cData[i].y-cData[j].y;if(dx*dx+dy*dy<=EPSc*EPSc){dbClust[i]=dbClust[j];break;}}}}
+for(let iter=0;iter<8;iter++){let s=[[0,0,0],[0,0,0],[0,0,0]];pts.forEach(p=>{let md=1e9,b=0;for(let j=0;j<3;j++){let d=(p.x-cents[j].x)**2+(p.y-cents[j].y)**2;if(d<md){md=d;b=j;}}s[b][0]+=p.x;s[b][1]+=p.y;s[b][2]++;});for(let j=0;j<3;j++)if(s[j][2]>0)cents[j]={x:s[j][0]/s[j][2],y:s[j][1]/s[j][2]};}
+pts.forEach(p=>{let md=1e9,b=0;for(let j=0;j<3;j++){let d=(p.x-cents[j].x)**2+(p.y-cents[j].y)**2;if(d<md){md=d;b=j;}}skx.fillStyle=CC[b]+'cc';skx.beginPath();skx.arc(p.x,p.y,4,0,Math.PI*2);skx.fill();});
+cents.forEach((c,j)=>{skx.fillStyle=CC[j];skx.strokeStyle='#fff';skx.lineWidth=2;skx.beginPath();for(let s=0;s<10;s++){let r=s%2===0?8:3,a=(s*Math.PI/5)-Math.PI/2;let sx=c.x+Math.cos(a)*r,sy=c.y+Math.sin(a)*r;s===0?skx.moveTo(sx,sy):skx.lineTo(sx,sy);}skx.closePath();skx.fill();skx.stroke();});
+skx.fillStyle='rgba(34,197,94,0.9)';skx.font='bold 11px system-ui';skx.fillText('✅ K-Means: 3 clusters perfectos',60,22);
 }
 
-window.updateComp=function(){
-let t=parseInt(document.getElementById('compSlider').value)/100;
-let l=document.getElementById('compLabel'),cp=document.getElementById('compCap');
-if(t<.05){l.innerHTML='K-Means (K=3)';l.style.color='var(--accent)';cp.innerHTML='🔵 <strong>K-Means:</strong> Fuerza 3 clusters esféricos. Los outliers se cuelan en los clusters y distorsionan los centroides.';}
-else if(t>.95){l.innerHTML='DBSCAN (ε=38, MinPts=4)';l.style.color='var(--gold)';cp.innerHTML='🟡 <strong>DBSCAN:</strong> 3 clusters por densidad. Los outliers quedan GRISES (ruido -1). Nadie los fuerza.';}
-else{l.innerHTML=Math.round(t*100)+'% transición';l.style.color='var(--muted)';cp.innerHTML='🔄 Desliza para comparar cómo cada algoritmo trata los mismos datos.';}
+// Scenario B: DBSCAN wins — noisy data with irregular shapes + outliers
+const sdb=document.getElementById('scenarioDbCanvas'),sdx=sdb.getContext('2d');
+function drawScenarioDb(){
+sdx.clearRect(0,0,360,280);
+sdx.fillStyle='#64748b';sdx.font='10px system-ui';sdx.fillText('Variable 1 →',130,272);
+sdx.save();sdx.translate(8,120);sdx.rotate(-Math.PI/2);sdx.fillText('Variable 2 →',0,0);sdx.restore();
+// Two clusters: one arc-shaped + one compact + scattered noise
+let dbpts=[];
+// Arc cluster
+for(let i=0;i<60;i++){let a=(i/60)*Math.PI*0.8+0.3;dbpts.push({x:80+Math.cos(a)*90+(Math.random()-.5)*12,y:140+Math.sin(a)*70+(Math.random()-.5)*10,tc:0});}
+// Compact cluster
+for(let i=0;i<40;i++)dbpts.push({x:260+(Math.random()-.5)*35,y:180+(Math.random()-.5)*30,tc:1});
+// Scattered noise
+for(let i=0;i<25;i++)dbpts.push({x:40+Math.random()*300,y:20+Math.random()*240,tc:-1});
 
-ccx.clearRect(0,0,cW,cH);
-let pad={l:55,r:20,t:25,b:45},pw=cW-pad.l-pad.r,ph=cH-pad.t-pad.b;
+// DBSCAN
+let EPSs=25,dCore=new Array(dbpts.length).fill(false);
+for(let i=0;i<dbpts.length;i++){let n=0;for(let j=0;j<dbpts.length;j++){if(i!==j){let dx=dbpts[i].x-dbpts[j].x,dy=dbpts[i].y-dbpts[j].y;if(dx*dx+dy*dy<=EPSs*EPSs)n++;}}dCore[i]=n>=4;}
+let dAss=new Array(dbpts.length).fill(-1),vis=new Set(),cid=0;
+for(let i=0;i<dbpts.length;i++){if(!dCore[i]||vis.has(i))continue;let stack=[i];vis.add(i);while(stack.length>0){let ci=stack.pop();dAss[ci]=cid;for(let j=0;j<dbpts.length;j++){if(vis.has(j))continue;let dx=dbpts[ci].x-dbpts[j].x,dy=dbpts[ci].y-dbpts[j].y;if(dx*dx+dy*dy<=EPSs*EPSs){vis.add(j);if(dCore[j])stack.push(j);}}}cid++;}
+for(let i=0;i<dbpts.length;i++){if(dAss[i]>=0)continue;for(let j=0;j<dbpts.length;j++){if(dAss[j]>=0){let dx=dbpts[i].x-dbpts[j].x,dy=dbpts[i].y-dbpts[j].y;if(dx*dx+dy*dy<=EPSs*EPSs){dAss[i]=dAss[j];break;}}}}
 
-// Grid
-ccx.strokeStyle='rgba(100,116,139,0.08)';ccx.lineWidth=.5;
-for(let x=pad.l;x<=cW-pad.r;x+=pw/6){ccx.beginPath();ccx.moveTo(x,pad.t);ccx.lineTo(x,pad.t+ph);ccx.stroke();}
-for(let y=pad.t;y<=pad.t+ph;y+=ph/5){ccx.beginPath();ccx.moveTo(pad.l,y);ccx.lineTo(cW-pad.r,y);ccx.stroke();}
-
-ccx.fillStyle='#64748b';ccx.font='10px system-ui';ccx.fillText('Presión WHP →',cW/2-40,cH-6);
-ccx.save();ccx.translate(10,cH/2+25);ccx.rotate(-Math.PI/2);ccx.fillText('Caudal Qo →',0,0);ccx.restore();
-
-function scX(v){return pad.l+(v/cW)*pw;}
-function scY(v){return pad.t+ph-(v/cH)*ph;}
-
-// Interpolated draw
-for(let i=0;i<cData.length;i++){
-let p=cData[i],kmA=-1,dbA=dbClust[i];
-// KMeans assignment
-let md=1e9;for(let j=0;j<3;j++){let d=(p.x-kmCents[j].x)**2+(p.y-kmCents[j].y)**2;if(d<md){md=d;kmA=j;}}
-let alpha=.6+(t>.5?(t-.5)*2*.2:0);
-if(t<.05){ccx.fillStyle=CC[kmA%CC.length]+'aa';}
-else if(t>.95){ccx.fillStyle=dbA>=0&&dbA<5?CC[dbA]+'aa':'#475569';}
-else{let r=dbA>=0&&dbA<5?CC[dbA]:'#475569',k=CC[kmA%CC.length];ccx.fillStyle=k+'aa';ccx.globalAlpha=1-t;ccx.beginPath();ccx.arc(scX(p.x),scY(p.y),3.5,0,Math.PI*2);ccx.fill();ccx.fillStyle=r+'aa';ccx.globalAlpha=t;}
-ccx.beginPath();ccx.arc(scX(p.x),scY(p.y),3.5,0,Math.PI*2);ccx.fill();
+dbpts.forEach((p,i)=>{let c=dAss[i];sdx.fillStyle=c>=0&&c<5?CC[c]+'cc':'#475569';sdx.beginPath();sdx.arc(p.x,p.y,c===-1?5:4,0,Math.PI*2);sdx.fill();});
+let nc=dbpts.filter((_,i)=>dAss[i]===-1).length;
+sdx.fillStyle='rgba(245,158,11,0.95)';sdx.font='bold 11px system-ui';
+sdx.fillText('✅ DBSCAN: 2 clusters + '+nc+' ruido',70,22);
 }
-ccx.globalAlpha=1;
-
-// Centroids + labels
-if(t<.95){for(let j=0;j<3;j++){ccx.fillStyle=CC[j];ccx.strokeStyle='#fff';ccx.lineWidth=2;ccx.beginPath();ccx.arc(scX(kmCents[j].x),scY(kmCents[j].y),7,0,Math.PI*2);ccx.fill();ccx.stroke();ccx.fillStyle='#fff';ccx.font='bold 10px system-ui';ccx.fillText('C'+(j+1),scX(kmCents[j].x)+10,scY(kmCents[j].y)+4);}}
-
-// DBSCAN noise label
-if(t>.05){let nc=cData.filter((_,i)=>dbClust[i]===-1).length;ccx.fillStyle='#ef4444';ccx.font='bold 10px system-ui';ccx.fillText('RUIDO: '+nc+' puntos',cW-160,25);}
-};
 
 // ═══════════ INIT ═══════════
-genDBData();drawDBSCAN();genKDists();drawKDists();genCompData();window.updateComp();
+genDBData();drawDBSCAN();genKDists();drawKDists();drawScenarioKm();drawScenarioDb();
 })();
 </script>
 
