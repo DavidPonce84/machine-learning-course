@@ -93,10 +93,14 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <button class="btn" onclick="dbscanStep('next')">▶</button>
 <button class="btn outline" onclick="dbscanReset()">↺</button>
 </div>
-<div class="viz"><canvas id="dbscanCanvas" width="750" height="420"></canvas>
-<div class="viz-caption" id="dbscanCap">Paso 0: 250 puntos con 3 zonas densas + ruido disperso. ε=40px, MinPts=4.</div>
+<div class="slider-group" style="margin:.5rem 0 1rem">
+<label>Ajusta epsilon (eps): <strong id="epsVal" style="color:var(--gold)">40</strong> px — MinPts=4 fijo</label>
+<input type="range" min="10" max="80" value="40" id="epsSlider" oninput="updateEpsilon()">
 </div>
-<div class="callout tip"><strong>💡 Observa:</strong> Los puntos grises NUNCA cambian de color. DBSCAN no los fuerza — simplemente los ignora. Eso es lo que K-Means NO puede hacer.</div>
+<div class="viz"><canvas id="dbscanCanvas" width="750" height="420"></canvas>
+<div class="viz-caption" id="dbscanCap">Paso 0: 250 puntos con 3 zonas densas + ruido disperso. eps=40px, MinPts=4.</div>
+</div>
+<div class="callout tip"><strong>Observa:</strong> Mueve el slider de epsilon. Con eps pequeno casi todo es ruido. Con eps grande todo se fusiona.</div>
 </div>
 
 <!-- ═══════════ 4. K-DISTANCE ═══════════ -->
@@ -229,7 +233,7 @@ setInterval(()=>{kfT=(kfT+1)%90;drawKmeansFail()},50);
 
 // ═══════════ 2. DBSCAN STEP-BY-STEP ═══════════
 const dc=document.getElementById('dbscanCanvas'),dctx=dc.getContext('2d'),dW=dc.width,dH=dc.height;
-const EPS=40,MINP=4;let dPts=[],dAss=[],dCore=[],dIsBorder=[],dStep=0,dClusters=[];
+let EPS=40;const MINP=4;let dPts=[],dAss=[],dCore=[],dIsBorder=[],dStep=0,dClusters=[];
 
 function genDBData(){
 dPts=[];let cl=[[100,100,30,35],[380,290,25,30],[600,120,35,28]];
@@ -313,6 +317,16 @@ if(dStep===0){findCore();updateDSteps(1)}else if(dStep===1){expandClusters();upd
 drawDBSCAN();
 };
 window.dbscanReset=function(){genDBData();drawDBSCAN();};
+window.updateEpsilon=function(){
+EPS=parseInt(document.getElementById('epsSlider').value);
+document.getElementById('epsVal').textContent=EPS;
+// Reset step, rerun DBSCAN
+dAss.fill(-1);dCore.fill(false);dIsBorder.fill(false);dClusters=[];
+findCore();expandClusters();dStep=0;updateDSteps(0);
+// Show result immediately (step 5)
+if(dClusters.length>0){dStep=5;updateDSteps(5);}
+drawDBSCAN();
+};
 
 // ═══════════ 3. K-DISTANCE ═══════════
 const kc=document.getElementById('kdistCanvas'),kcx=kc.getContext('2d'),kW=kc.width,kH=kc.height;

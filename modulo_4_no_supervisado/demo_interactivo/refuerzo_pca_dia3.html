@@ -209,38 +209,30 @@ dpx.fillText('4 curvas = 4D',dpW-130,dpH/2+5);
 
 // ═══════════ 2. SHADOW ANALOGY ═══════════
 const sc=document.getElementById('shadowCanvas'),scx=sc.getContext('2d'),sW=sc.width,sH=sc.height;
-let shadowAngle=0;
+let shadowAngle=0,shadowPts=[];
+function genShadowData(){
+shadowPts=[];let s=42;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+for(let c=0;c<3;c++){let cx=150+c*220,cy=180+(c-1)*80,cz=50+c*30;for(let i=0;i<40;i++)shadowPts.push({x:cx+(r()-.5)*100,y:cy+(r()-.5)*80,z:cz+(r()-.5)*60,tc:c});}
+}
 function drawShadow(){
 scx.clearRect(0,0,sW,sH);
-// Generate 3D-like clustered data
-let pts=[];let seed=42;
-function rnd(){seed=(seed*16807)%2147483647;return(seed-1)/2147483646;}
-for(let c=0;c<3;c++){
-let cx=150+c*220,cy=180+(c-1)*80,cz=50+c*30;
-for(let i=0;i<40;i++)pts.push({x:cx+(rnd()-.5)*100,y:cy+(rnd()-.5)*80,z:cz+(rnd()-.5)*60,tc:c});
-}
-// Compute PCA manually
-let mx=pts.reduce((a,b)=>a+b.x,0)/pts.length,my=pts.reduce((a,b)=>a+b.y,0)/pts.length;
-let vx=0,vy=0;for(let p of pts){vx+=(p.x-mx)*(p.y-my);vy+=(p.x-mx)*(p.x-mx);}
-let angle=Math.atan2(vx,vy)+shadowAngle*Math.PI*2;
+let mx=shadowPts.reduce((a,b)=>a+b.x,0)/shadowPts.length,my=shadowPts.reduce((a,b)=>a+b.y,0)/shadowPts.length;
+let covXY=0,covXX=0;for(let p of shadowPts){covXY+=(p.x-mx)*(p.y-my);covXX+=(p.x-mx)*(p.x-mx);}
+let angle=Math.atan2(covXY,covXX)+shadowAngle*Math.PI*2;
 let ca=Math.cos(angle),sa=Math.sin(angle);
-// Draw original points
-for(let p of pts){
+for(let p of shadowPts){
 scx.fillStyle=CC[p.tc]+'44';scx.beginPath();scx.arc(p.x,p.y,3,0,Math.PI*2);scx.fill();
-// Projected shadow on PC1
 let proj=p.x*ca+p.y*sa;
 let sx=120+proj*1.5,sy=sH-60+(p.z-60)*.3;
 scx.fillStyle=CC[p.tc]+'88';scx.beginPath();scx.arc(sx,sy,3.5,0,Math.PI*2);scx.fill();
-// Dashed line from original to shadow
 scx.strokeStyle=CC[p.tc]+'22';scx.lineWidth=.5;scx.beginPath();scx.moveTo(p.x,p.y);scx.lineTo(sx,sy);scx.stroke();
 }
-// PC1 and PC2 axes
 scx.strokeStyle='#ef4444';scx.lineWidth=2;scx.beginPath();scx.moveTo(120,sH-60);scx.lineTo(sW-20,sH-60);scx.stroke();
 scx.strokeStyle='#38bdf8';scx.lineWidth=2;scx.setLineDash([4,4]);scx.beginPath();scx.moveTo(120,sH-60);scx.lineTo(120,10);scx.stroke();scx.setLineDash([]);
 scx.fillStyle='#ef4444';scx.font='bold 11px system-ui';scx.fillText('PC1 (maxima varianza)',sW-200,sH-70);
 scx.fillStyle='#38bdf8';scx.font='bold 11px system-ui';scx.fillText('PC2',130,40);
-scx.fillStyle='#94a3b8';scx.font='10px system-ui';scx.fillText('Datos originales (multicolor)',sW-200,20);
-scx.fillText('Proyeccion PCA (colores intensos)',sW-200,35);
+scx.fillStyle='#94a3b8';scx.font='10px system-ui';scx.fillText('Datos originales',sW-160,20);
+scx.fillText('Proyeccion PCA',sW-160,35);
 }
 setInterval(()=>{shadowAngle+=.002;if(shadowAngle>1)shadowAngle=0;drawShadow();},40);
 
@@ -316,17 +308,18 @@ srx.fillText('Total: 90%',srW/2,20);
 // ═══════════ 5. SELECT 2 vs PCA ═══════════
 const s2c=document.getElementById('select2Canvas'),s2x=s2c.getContext('2d');
 const prc=document.getElementById('pcaResultCanvas'),prx=prc.getContext('2d');
+let compData=[];
+function genCompData2(){
+compData=[];let s=99;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+for(let c=0;c<3;c++){let cx=80+(c%2)*240,cy=200-(c-1)*80;for(let i=0;i<20;i++)compData.push({gx:cx+(r()-.5)*30,gy:cy+(r()-.5)*25,px:cx+(r()-.5)*14,py:cy*1.2-100+(r()-.5)*12,tc:c});}
+}
 function drawComparison(){
-// Select 2: GR vs RHOB — clusters overlap
 s2x.clearRect(0,0,360,240);
 s2x.fillStyle='#64748b';s2x.font='9px system-ui';s2x.fillText('GR (API)',150,230);s2x.fillText('RHOB (g/cc)',5,110);
-let s2pts=[[80,180,15],[200,120,18],[280,60,16]];
-s2pts.forEach((c,ci)=>{for(let i=0;i<25;i++){let px=c[0]+(Math.random()-.5)*c[2]*3;let py=c[1]+(Math.random()-.5)*c[2]*3;s2x.fillStyle=CC[ci]+'88';s2x.beginPath();s2x.arc(px,py,4,0,Math.PI*2);s2x.fill();}});
-// PCA result: PC1 vs PC2 — clear separation
+for(let p of compData){s2x.fillStyle=CC[p.tc]+'88';s2x.beginPath();s2x.arc(p.gx,p.gy,4,0,Math.PI*2);s2x.fill();}
 prx.clearRect(0,0,360,240);
 prx.fillStyle='#64748b';prx.font='9px system-ui';prx.fillText('PC1 (Litologia)',120,230);prx.fillText('PC2 (Fluidos)',5,110);
-let prpts=[[80,180,12],[200,70,14],[300,150,13]];
-prpts.forEach((c,ci)=>{for(let i=0;i<25;i++){let px=c[0]+(Math.random()-.5)*c[2]*2.5;let py=c[1]+(Math.random()-.5)*c[2]*2.5;prx.fillStyle=CC[ci]+'cc';prx.beginPath();prx.arc(px,py,4,0,Math.PI*2);prx.fill();}});
+for(let p of compData){prx.fillStyle=CC[p.tc]+'cc';prx.beginPath();prx.arc(p.px,p.py,5,0,Math.PI*2);prx.fill();}
 }
 
 // ═══════════ 6. WELL LOGS ═══════════
@@ -415,7 +408,7 @@ fcx.fillStyle='#fff';fcx.font='bold 10px system-ui';fcx.fillText('C'+(j+1),c[0]+
 }
 
 // ═══════════ INIT ═══════════
-drawDimProblem();drawShadow();genPCAData();drawPCAStep();drawScree();drawComparison();genWLData();drawWellLogs(0);drawFacies();
+drawDimProblem();genShadowData();drawShadow();genPCAData();drawPCAStep();drawScree();genCompData2();drawComparison();genWLData();drawWellLogs(0);drawFacies();
 })();
 </script>
 </body>
