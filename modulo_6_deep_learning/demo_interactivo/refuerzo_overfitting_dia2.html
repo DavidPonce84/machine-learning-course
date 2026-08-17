@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚨 Overfitting y Regularización | Módulo 6 Día 2 · SLB</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--accent:#38bdf8;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--pink:#ec4899;--text:#f8fafc;--muted:#94a3b8;--border:#334155}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.container{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
+.hero{text-align:center;padding:4rem 0 2rem}
+.hero h1{font-size:2.4rem;background:linear-gradient(135deg,var(--red),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero .sub{color:var(--muted);font-size:1.1rem}
+.hero .badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1.2rem;margin-top:1rem;font-size:.9rem;color:var(--accent)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:2rem;margin:2rem 0}
+.section h2{color:var(--accent);font-size:1.5rem;margin-bottom:1rem}
+.section h3{color:var(--gold);font-size:1.1rem;margin:1.2rem 0 .5rem}
+.section p{margin-bottom:.8rem;color:#cbd5e1}
+.callout{border-radius:.8rem;padding:1.2rem;margin:1rem 0;font-size:.95rem}
+.callout.info{background:rgba(56,189,248,0.1);border-left:3px solid var(--accent)}
+.callout.warn{background:rgba(245,158,11,0.1);border-left:3px solid var(--gold)}
+.callout.tip{background:rgba(34,197,94,0.1);border-left:3px solid var(--green)}
+.viz{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;margin:1rem 0;text-align:center;overflow:hidden}
+.viz canvas{display:block;margin:0 auto}
+.viz-caption{padding:.6rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border)}
+.slider-group{margin:1rem 0}
+.slider-group label{display:block;color:var(--muted);font-size:.85rem}
+.slider-group input[type=range]{width:100%;accent-color:var(--red)}
+.code-block{background:#0f172a;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+.grid-card{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;padding:1.2rem}
+.grid-card h4{color:var(--gold);margin-bottom:.5rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+th{background:rgba(56,189,248,0.15);color:var(--accent);padding:.6rem;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
+#scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--red);z-index:100}
+</style>
+</head>
+<body>
+<div id="scroll-progress"></div>
+<div class="container">
+
+<div class="hero">
+<h1>🚨 Overfitting: Memorizar vs Aprender</h1>
+<p class="sub">Cómo detectarlo y combatirlo con Dropout y Early Stopping</p>
+<span class="badge">Módulo 6 Día 2 — Schlumberger (SLB) · Instructor: David Ponce</span>
+</div>
+
+<!-- 1. OVERFITTING ANALOGY -->
+<div class="section" id="s1">
+<h2>1. Overfitting: El Estudiante que Memoriza</h2>
+<div class="grid-2">
+<div class="grid-card"><h4>📚 Estudiante A (APRENDE)</h4>
+<p>Entiende los conceptos. Aprueba el examen Y el siguiente tema. Generaliza.</p></div>
+<div class="grid-card"><h4>🦜 Estudiante B (MEMORIZA)</h4>
+<p>Memoriza las respuestas exactas. Aprueba EL MISMO examen, pero falla con preguntas nuevas.</p></div>
+</div>
+<p>Una red neuronal con <strong>demasiadas neuronas y épocas</strong> es el Estudiante B: memoriza el ruido de los datos de entrenamiento y falla con datos nuevos.</p>
+<div class="callout warn"><strong>Overfitting = excelente en entrenamiento, pésimo en datos nuevos.</strong></div>
+</div>
+
+<!-- 2. LOSS CURVES -->
+<div class="section" id="s2">
+<h2>2. La Firma: Las Curvas se Separan</h2>
+<p>La señal clásica de overfitting: la pérdida de entrenamiento sigue bajando, pero la de validación empieza a SUBIR.</p>
+<div class="viz"><canvas id="overfitCanvas" width="750" height="340"></canvas>
+<div class="viz-caption">Azul = entrenamiento (sigue memorizando). Rojo = validación (ya no generaliza). El punto donde se separan = overfitting.</div></div>
+<div class="callout info"><strong>Observa:</strong> Antes del punto de separación, la red aprende. Después, memoriza. El objetivo es entrenar solo hasta antes de ese punto.</div>
+</div>
+
+<!-- 3. DROPOUT -->
+<div class="section" id="s3">
+<h2>3. Solución 1: Dropout — Vendar Ojos al Equipo</h2>
+<p>Dropout apaga aleatoriamente el 20-30% de las neuronas en cada paso. Ninguna neurona puede volverse "indispensable".</p>
+<div class="viz"><canvas id="dropoutCanvas" width="750" height="300"></canvas>
+<div class="viz-caption">Las neuronas grises (con X) están apagadas en este paso. En el siguiente paso, se apagan otras diferentes.</div></div>
+<div class="slider-group">
+<label>Probabilidad de Dropout: <span id="dropVal" style="color:var(--gold)">20%</span></label>
+<input type="range" min="0" max="60" value="20" id="dropSlider" oninput="updateDropout()">
+</div>
+<div class="callout tip"><strong>Analogía del fútbol:</strong> vendas los ojos al 20% del equipo en cada práctica. Todos desarrollan habilidades independientes en vez de depender de la estrella.</div>
+</div>
+
+<!-- 4. EARLY STOPPING -->
+<div class="section" id="s4">
+<h2>4. Solución 2: Early Stopping — Saber Cuándo Parar</h2>
+<p>Early Stopping monitorea la pérdida de validación. Si deja de mejorar por N épocas, detiene el entrenamiento automáticamente.</p>
+<div class="viz"><canvas id="earlyCanvas" width="750" height="340"></canvas>
+<div class="viz-caption">La línea vertical roja = donde Early Stopping detuvo el entrenamiento. Antes de que la validación suba.</div></div>
+<div class="callout info"><strong>Analogía del maratón:</strong> llega un punto donde seguir entrenando te LASTIMA. Early Stopping es el entrenador que dice "ya es suficiente".</div>
+</div>
+
+<!-- 5. COMPARISON -->
+<div class="section" id="s5">
+<h2>5. Antes vs Después</h2>
+<div class="grid-2">
+<div class="grid-card"><h4 style="color:var(--red)">Sin Regularización</h4>
+<div class="viz"><canvas id="noRegCanvas" width="340" height="220"></canvas></div>
+<p style="font-size:.85rem;color:var(--red)">Entrenamiento cae a cero, validación sube. Memorizó.</p></div>
+<div class="grid-card"><h4 style="color:var(--green)">Con Dropout + Early Stopping</h4>
+<div class="viz"><canvas id="regCanvas" width="340" height="220"></canvas></div>
+<p style="font-size:.85rem;color:var(--green)">Ambas bajan y se estabilizan. Aprendió.</p></div>
+</div>
+</div>
+
+<!-- 6. PIPELINE -->
+<div class="section" id="s6">
+<h2>6. El Pipeline con Regularización</h2>
+<div class="code-block">model = Sequential([
+    Dense(128, activation='relu', input_shape=(3,)),
+    Dropout(0.2),                    # apaga 20% de neuronas
+    Dense(128, activation='relu'),
+    Dropout(0.2),
+    Dense(1, activation='linear')
+])
+early_stop = EarlyStopping(monitor='val_loss', patience=10,
+                           restore_best_weights=True)
+model.fit(..., callbacks=[early_stop])</div>
+<div class="callout tip"><strong>Mismo modelo, mismos datos.</strong> Solo agregamos Dropout y Early Stopping. La diferencia entre memorizar y aprender.</div>
+</div>
+
+</div>
+
+<script>
+(function(){
+window.addEventListener('scroll',()=>{
+document.getElementById('scroll-progress').style.width=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight)*100)+'%';
+});
+
+// ═══════════ 2. OVERFIT CURVES ═══════════
+const oc=document.getElementById('overfitCanvas'),ocx=oc.getContext('2d'),oW=oc.width,oH=oc.height;
+function drawOverfit(){
+ocx.clearRect(0,0,oW,oH);
+let pad={l:60,r:20,t:30,b:40},pw=oW-pad.l-pad.r,ph=oH-pad.t-pad.b;
+ocx.strokeStyle='rgba(100,116,139,0.1)';ocx.lineWidth=.5;
+for(let i=0;i<=5;i++){let y=pad.t+ph/5*i;ocx.beginPath();ocx.moveTo(pad.l,y);ocx.lineTo(oW-pad.r,y);ocx.stroke();}
+ocx.fillStyle='#94a3b8';ocx.font='11px system-ui';
+ocx.fillText('Época →',oW/2-30,oH-6);
+ocx.save();ocx.translate(12,oH/2+20);ocx.rotate(-Math.PI/2);ocx.fillText('MSE →',0,0);ocx.restore();
+// Training loss: keeps decreasing
+ocx.strokeStyle='#38bdf8';ocx.lineWidth=2.5;ocx.beginPath();
+for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.14);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+ocx.stroke();
+// Validation loss: decreases then increases
+ocx.strokeStyle='#ef4444';ocx.lineWidth=2.5;ocx.beginPath();
+for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw;let y;
+if(i<40)y=pad.t+ph*(0.85-Math.log(i+1)*0.13);
+else y=pad.t+ph*(0.85-Math.log(41)*0.13+(i-40)*0.006);
+i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+ocx.stroke();
+// Separation point
+let sx=pad.l+(40/99)*pw;
+ocx.strokeStyle='rgba(245,158,11,0.8)';ocx.lineWidth=2;ocx.setLineDash([6,4]);
+ocx.beginPath();ocx.moveTo(sx,pad.t);ocx.lineTo(sx,pad.t+ph);ocx.stroke();ocx.setLineDash([]);
+ocx.fillStyle='#f59e0b';ocx.font='bold 11px system-ui';
+ocx.fillText('← OVERFITTING',sx+6,pad.t+20);
+ocx.fillStyle='#38bdf8';ocx.fillText('● Entrenamiento',pad.l+20,pad.t+15);
+ocx.fillStyle='#ef4444';ocx.fillText('● Validación',pad.l+120,pad.t+15);
+}
+
+// ═══════════ 3. DROPOUT ═══════════
+const dc=document.getElementById('dropoutCanvas'),dcx=dc.getContext('2d');
+function drawDropout(rate){
+dcx.clearRect(0,0,750,300);
+let neurons=[];
+for(let r=0;r<4;r++){let row=[];for(let i=0;i<10;i++){row.push({x:120+r*180,y:30+i*26,off:Math.random()<rate});}neurons.push(row);}
+// Connections
+for(let r=0;r<3;r++)for(let a of neurons[r])for(let b of neurons[r+1]){
+dcx.strokeStyle=a.off||b.off?'rgba(148,163,184,0.05)':'rgba(148,163,184,0.2)';
+dcx.lineWidth=.5;dcx.beginPath();dcx.moveTo(a.x+10,a.y);dcx.lineTo(b.x-10,b.y);dcx.stroke();
+}
+neurons.forEach(row=>row.forEach(n=>{
+dcx.fillStyle=n.off?'#334155':'#38bdf8';
+dcx.beginPath();dcx.arc(n.x,n.y,9,0,Math.PI*2);dcx.fill();
+if(n.off){dcx.strokeStyle='#ef4444';dcx.lineWidth=2;dcx.beginPath();dcx.moveTo(n.x-4,n.y-4);dcx.lineTo(n.x+4,n.y+4);dcx.moveTo(n.x+4,n.y-4);dcx.lineTo(n.x-4,n.y+4);dcx.stroke();}
+}));
+let offCount=neurons.flat().filter(n=>n.off).length;
+dcx.fillStyle='#94a3b8';dcx.font='11px system-ui';
+dcx.fillText('Neuronas apagadas en este paso: '+offCount+' / '+neurons.flat().length,270,20);
+}
+window.updateDropout=function(){let r=parseInt(document.getElementById('dropSlider').value)/100;document.getElementById('dropVal').textContent=Math.round(r*100)+'%';drawDropout(r);};
+
+// ═══════════ 4. EARLY STOPPING ═══════════
+const ec=document.getElementById('earlyCanvas'),ecx=ec.getContext('2d');
+function drawEarly(){
+ecx.clearRect(0,0,750,340);
+let pad={l:60,r:20,t:30,b:40},pw=750-pad.l-pad.r,ph=340-pad.t-pad.b;
+ecx.strokeStyle='rgba(100,116,139,0.1)';ecx.lineWidth=.5;
+for(let i=0;i<=5;i++){let y=pad.t+ph/5*i;ecx.beginPath();ecx.moveTo(pad.l,y);ecx.lineTo(750-pad.r,y);ecx.stroke();}
+ecx.fillStyle='#94a3b8';ecx.font='11px system-ui';
+ecx.fillText('Época →',375,330);
+ecx.save();ecx.translate(12,170);ecx.rotate(-Math.PI/2);ecx.fillText('MSE →',0,0);ecx.restore();
+// Loss decreasing and flattening
+ecx.strokeStyle='#38bdf8';ecx.lineWidth=2.5;ecx.beginPath();
+for(let i=0;i<70;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.16);i===0?ecx.moveTo(x,y):ecx.lineTo(x,y);}
+ecx.stroke();
+// Stop line
+let sx=pad.l+(55/99)*pw;
+ecx.strokeStyle='#22c55e';ecx.lineWidth=3;
+ecx.beginPath();ecx.moveTo(sx,pad.t);ecx.lineTo(sx,pad.t+ph);ecx.stroke();
+ecx.fillStyle='#22c55e';ecx.font='bold 12px system-ui';
+ecx.fillText('EARLY STOPPING (época ~55)',sx+6,pad.t+20);
+ecx.fillStyle='#94a3b8';ecx.fillText('La pérdida ya no mejora → detener aquí',sx+6,pad.t+40);
+}
+
+// ═══════════ 5. COMPARISON ═══════════
+function drawMini(cv,cx,w,h,overfit){
+cx.clearRect(0,0,w,h);
+let pad={l:35,r:10,t:15,b:25},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
+cx.strokeStyle='rgba(100,116,139,0.1)';cx.lineWidth=.5;
+for(let i=0;i<=3;i++){let y=pad.t+ph/3*i;cx.beginPath();cx.moveTo(pad.l,y);cx.lineTo(w-pad.r,y);cx.stroke();}
+cx.strokeStyle='#38bdf8';cx.lineWidth=2;cx.beginPath();
+for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.14);i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
+cx.stroke();
+cx.strokeStyle=overfit?'#ef4444':'#22c55e';cx.lineWidth=2;cx.beginPath();
+for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw;let y;
+if(overfit){if(i<40)y=pad.t+ph*(0.85-Math.log(i+1)*0.13);else y=pad.t+ph*(0.85-Math.log(41)*0.13+(i-40)*0.006);}
+else y=pad.t+ph*(0.85-Math.log(i+1)*0.13);
+i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
+cx.stroke();
+}
+const nrc=document.getElementById('noRegCanvas'),nrx=nrc.getContext('2d');
+drawMini(nrc,nrx,340,220,true);
+const rgc=document.getElementById('regCanvas'),rgx=rgc.getContext('2d');
+drawMini(rgc,rgx,340,220,false);
+
+// ═══════════ INIT ═══════════
+drawOverfit();drawDropout(0.2);drawEarly();
+})();
+</script>
+</body>
+</html>
