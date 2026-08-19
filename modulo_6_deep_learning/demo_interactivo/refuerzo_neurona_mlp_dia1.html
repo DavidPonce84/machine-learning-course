@@ -115,6 +115,19 @@ model.fit(X_train, y_train, epochs=50, validation_data=(X_val, y_val))</div>
 <div class="callout info"><strong>Lo impresionante:</strong> la red "descubrió" la relación física entre GR, ILD, RHOB y la porosidad, sin que nadie le diera la fórmula petrofísica.</div>
 </div>
 
+<!-- 7. NEURON COUNT -->
+<div class="section" id="s7">
+<h2>7. Interactivo: ¿Cuántas Neuronas Necesito?</h2>
+<p>Mueve el slider y observa cómo cambia el ajuste de la porosidad. Con pocas neuronas la red es demasiado simple y no captura el patrón. Con demasiadas, memoriza el ruido.</p>
+<div class="slider-group">
+<label>Neuronas en la capa oculta: <span id="neuVal" style="color:var(--accent)">16</span></label>
+<input type="range" min="1" max="64" value="16" id="neuSlider" oninput="updateNeurons()">
+</div>
+<div class="viz"><canvas id="neuronsCanvas" width="750" height="300"></canvas>
+<div class="viz-caption" id="neuronsCap">Buen equilibrio: captura el patrón sin memorizar el ruido.</div></div>
+<div class="callout" id="neuronsWarn"><strong>Regla práctica:</strong> pocas neuronas causan underfitting (no aprende), demasiadas causan overfitting (memoriza). El equilibrio se encuentra observando la curva de pérdida.</div>
+</div>
+
 </div>
 
 <script>
@@ -259,8 +272,73 @@ resx.fillStyle='#C0392B';resx.font='11px system-ui';resx.fillText('Real',60,40);
 resx.fillStyle='#E67E22';resx.fillText('Predicha',120,40);
 }
 
+// ═══════════ 7. NEURON COUNT ═══════════
+const nuc=document.getElementById('neuronsCanvas'),nux=nuc.getContext('2d');
+let nuData=[];
+function genNuData(){
+nuData=[];let s=13;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
+for(let i=0;i<200;i++){
+let x=i/199;
+let wave=0.2+0.05*Math.sin(x*Math.PI*4);
+let noise=(r()-.5)*0.05;
+nuData.push({x:x,y:wave+noise,noise:noise});
+}}
+function drawNeurons(){
+let neurons=parseInt(document.getElementById('neuSlider').value);
+nux.clearRect(0,0,750,300);
+let pad={l:50,r:20,t:25,b:40},pw=750-pad.l-pad.r,ph=300-pad.t-pad.b;
+// axes
+nux.fillStyle='#64748b';nux.font='10px system-ui';
+nux.fillText('Profundidad',360,290);
+nux.save();nux.translate(14,150);nux.rotate(-Math.PI/2);nux.fillText('Porosidad',0,0);nux.restore();
+// real data points
+nuData.forEach(p=>{
+let sx=pad.l+p.x*pw, sy=pad.t+ph-(p.y/0.5)*ph;
+nux.fillStyle='rgba(192,57,43,0.5)';nux.beginPath();nux.arc(sx,sy,2,0,Math.PI*2);nux.fill();
+});
+// model fit curve
+nux.strokeStyle='#34495E';nux.lineWidth=2.5;nux.beginPath();
+for(let i=0;i<200;i++){
+let p=nuData[i];
+let x=p.x;
+let wave=0.2+0.05*Math.sin(x*Math.PI*4);
+let fit;
+if(neurons<8){
+let t=neurons/8;fit=0.2+(wave-0.2)*t; // underfit: linea -> onda
+}else if(neurons<=32){
+fit=wave; // buen ajuste
+}else{
+let t=(neurons-32)/32;fit=wave+p.noise*t; // overfit: añade ruido
+}
+let sx=pad.l+x*pw, sy=pad.t+ph-(fit/0.5)*ph;
+i===0?nux.moveTo(sx,sy):nux.lineTo(sx,sy);
+}
+nux.stroke();
+// legend
+nux.fillStyle='#C0392B';nux.font='11px system-ui';nux.fillText('Datos reales',60,20);
+nux.fillStyle='#34495E';nux.fillText('Ajuste del modelo',150,20);
+// status
+let cap=document.getElementById('neuronsCap'),warn=document.getElementById('neuronsWarn');
+if(neurons<8){
+cap.textContent='Pocas neuronas: la red es demasiado simple y no captura el patrón (UNDERFITTING).';
+warn.style.background='#fef8ee';warn.style.borderLeft='3px solid #E67E22';
+warn.innerHTML='<strong>Underfitting:</strong> el modelo es tan simple que no aprende la relación. Ni en entrenamiento ni en validación acierta. Solución: más neuronas.';
+}else if(neurons<=32){
+cap.textContent='Buen equilibrio: captura el patrón sin memorizar el ruido.';
+warn.style.background='#eef7f5';warn.style.borderLeft='3px solid #16A085';
+warn.innerHTML='<strong>Buen ajuste:</strong> el modelo captura la tendencia real sin perseguir el ruido. Es lo que buscamos.';
+}else{
+cap.textContent='Demasiadas neuronas: la red memoriza el ruido (OVERFITTING).';
+warn.style.background='#fdf2f2';warn.style.borderLeft='3px solid #C0392B';
+warn.innerHTML='<strong>Overfitting:</strong> el modelo persigue cada punto, incluido el ruido. Excelente en entrenamiento, pésimo en datos nuevos. Solución: menos neuronas o Dropout.';
+}}
+window.updateNeurons=function(){
+document.getElementById('neuVal').textContent=document.getElementById('neuSlider').value;
+drawNeurons();
+};
+
 // ═══════════ INIT ═══════════
-drawNeuron();drawMLP();drawTrain();drawResult();
+drawNeuron();drawMLP();drawTrain();drawResult();genNuData();drawNeurons();
 })();
 </script>
 </body>
