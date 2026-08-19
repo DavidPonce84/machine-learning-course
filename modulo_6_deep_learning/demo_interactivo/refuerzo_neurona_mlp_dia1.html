@@ -3,38 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🧠 Redes Neuronales — La Neurona y el MLP | Módulo 6 Día 1 · SLB</title>
+<title>Redes Neuronales — La Neurona y el MLP | Módulo 6 Día 1 · UDLA</title>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--accent:#38bdf8;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--pink:#ec4899;--text:#f8fafc;--muted:#94a3b8;--border:#334155}
+:root{--bg:#f8fafc;--card:#ffffff;--accent:#C0392B;--accent2:#E67E22;--green:#16A085;--slate:#34495E;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
 .container{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
 .hero{text-align:center;padding:4rem 0 2rem}
-.hero h1{font-size:2.5rem;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero h1{font-size:2.5rem;color:var(--accent);margin-bottom:.5rem}
 .hero .sub{color:var(--muted);font-size:1.1rem}
 .hero .badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1.2rem;margin-top:1rem;font-size:.9rem;color:var(--accent)}
-.section{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:2rem;margin:2rem 0}
+.section{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:2rem;margin:2rem 0;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .section h2{color:var(--accent);font-size:1.5rem;margin-bottom:1rem}
-.section h3{color:var(--gold);font-size:1.1rem;margin:1.2rem 0 .5rem}
-.section p{margin-bottom:.8rem;color:#cbd5e1}
-.callout{border-radius:.8rem;padding:1.2rem;margin:1rem 0;font-size:.95rem}
-.callout.info{background:rgba(56,189,248,0.1);border-left:3px solid var(--accent)}
-.callout.warn{background:rgba(245,158,11,0.1);border-left:3px solid var(--gold)}
-.callout.tip{background:rgba(34,197,94,0.1);border-left:3px solid var(--green)}
-.viz{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;margin:1rem 0;text-align:center;overflow:hidden}
+.section h3{color:var(--accent2);font-size:1.1rem;margin:1.2rem 0 .5rem}
+.section p{margin-bottom:.8rem;color:#334155}
+.callout{border-radius:.6rem;padding:1.1rem;margin:1rem 0;font-size:.95rem}
+.callout.info{background:#fdf2f2;border-left:3px solid var(--accent)}
+.callout.warn{background:#fef8ee;border-left:3px solid var(--accent2)}
+.callout.tip{background:#eef7f5;border-left:3px solid var(--green)}
+.viz{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;margin:1rem 0;text-align:center;overflow:hidden}
 .viz canvas{display:block;margin:0 auto}
 .viz-caption{padding:.6rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border)}
 .slider-group{margin:1rem 0}
 .slider-group label{display:block;color:var(--muted);font-size:.85rem}
 .slider-group input[type=range]{width:100%;accent-color:var(--accent)}
-.code-block{background:#0f172a;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
+.code-block{background:#1e293b;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0}
 @media(max-width:700px){.grid-2{grid-template-columns:1fr}}
-.grid-card{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;padding:1.2rem}
-.grid-card h4{color:var(--gold);margin-bottom:.5rem}
+.grid-card{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem}
+.grid-card h4{color:var(--accent);margin-bottom:.5rem}
 table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
-th{background:rgba(56,189,248,0.15);color:var(--accent);padding:.6rem;text-align:left;border-bottom:2px solid var(--border)}
-td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
+th{background:#fdf2f2;color:var(--accent);padding:.6rem;text-align:left;border-bottom:2px solid var(--border)}
+td{padding:.6rem;border-bottom:1px solid var(--border);color:#334155}
+.btn{background:var(--accent);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:.4rem;font-weight:600;cursor:pointer;font-size:.9rem;margin:.3rem}
+.btn:hover{opacity:.9}
 #scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:100}
 </style>
 </head>
@@ -43,19 +45,19 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <div class="container">
 
 <div class="hero">
-<h1>🧠 Redes Neuronales: La Neurona y el MLP</h1>
+<h1>Redes Neuronales: La Neurona y el MLP</h1>
 <p class="sub">De una neurona a una máquina que predice porosidad</p>
-<span class="badge">Módulo 6 Día 1 — Schlumberger (SLB) · Instructor: David Ponce</span>
+<span class="badge">Módulo 6 Día 1 — UDLA · Instructor: David Ponce</span>
 </div>
 
 <!-- 1. THE NEURON -->
 <div class="section" id="s1">
-<h2>1. La Neurona: Un Mini-Ingeniero que Pondera</h2>
-<p>Una neurona artificial recibe entradas, las <strong>pondera según su importancia</strong>, suma todo y produce una salida. Es exactamente lo que hace un ingeniero con experiencia: sabe que RHOB importa más que GR para la porosidad.</p>
+<h2>1. La Neurona: Tu Promedio Final</h2>
+<p>Una neurona artificial recibe entradas, las <strong>pondera según su importancia</strong>, suma todo y produce una salida. Es como calcular tu promedio final: cada nota se multiplica por su peso y se suma todo.</p>
 <div class="viz"><canvas id="neuronCanvas" width="750" height="320"></canvas>
 <div class="viz-caption">Tres entradas (GR, ILD, RHOB), cada una con un peso. La neurona suma y aplica una activación para producir la salida.</div></div>
 <div class="slider-group">
-<label>Peso de RHOB: <span id="wRhobVal" style="color:var(--gold)">0.8</span> (importancia de la densidad para predecir porosidad)</label>
+<label>Peso de RHOB: <span id="wRhobVal" style="color:var(--accent)">0.8</span> (importancia de la densidad para predecir porosidad)</label>
 <input type="range" min="-2" max="2" step="0.1" value="0.8" id="wRhob" oninput="updateNeuron()">
 </div>
 <div class="callout info"><strong>Observa:</strong> Mueve el peso de RHOB y mira cómo cambia la salida. Cuanto más importa RHOB (peso alto), más influye en la predicción. Esa es la esencia: la red aprende estos pesos durante el entrenamiento.</div>
@@ -67,7 +69,7 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <p>Después de sumar, la activación decide <strong>si la neurona "dispara" y cuánto</strong>. Es lo que le da a la red su poder no-lineal.</p>
 <div class="grid-2">
 <div class="grid-card"><h4>ReLU (capas ocultas)</h4><div class="viz"><canvas id="reluCanvas" width="340" height="220"></canvas></div>
-<p style="font-size:.85rem">Si z &gt; 0 → z. Si z &lt; 0 → 0. Como un pozo que solo reporta caudal positivo.</p></div>
+<p style="font-size:.85rem">Si z es positivo, lo pasa; si es negativo, da 0. Como un pozo que solo reporta caudal positivo.</p></div>
 <div class="grid-card"><h4>Lineal (capa de salida)</h4><div class="viz"><canvas id="linearCanvas" width="340" height="220"></canvas></div>
 <p style="font-size:.85rem">Pasa z tal cual. Para predecir valores continuos (porosidad), sin límites.</p></div>
 </div>
@@ -78,14 +80,14 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <h2>3. El MLP: Apilando Neuronas en Capas</h2>
 <p>Un Perceptrón Multicapa (MLP) apila capas de neuronas. Cada capa extrae un nivel más alto de abstracción, como una cadena de montaje.</p>
 <div class="viz"><canvas id="mlpCanvas" width="750" height="340"></canvas>
-<div class="viz-caption">Capa de entrada (3) → Capa oculta 1 (64) → Capa oculta 2 (32) → Capa de salida (1).</div></div>
-<div class="callout info"><strong>¿Por qué capas ocultas?</strong> Una sola capa solo puede aprender relaciones lineales. Apilar capas con activaciones ReLU permite aprender patrones curvos y complejos — como la relación no-lineal entre logs y porosidad.</div>
+<div class="viz-caption">Capa de entrada (3), capa oculta 1 (64), capa oculta 2 (32), capa de salida (1).</div></div>
+<div class="callout info"><strong>¿Por qué capas ocultas?</strong> Una sola capa solo puede aprender relaciones lineales. Apilar capas con activaciones ReLU permite aprender patrones curvos y complejos, como la relación no-lineal entre logs y porosidad.</div>
 </div>
 
 <!-- 4. FORWARD/BACKPROP -->
 <div class="section" id="s4">
 <h2>4. Cómo Aprende: Forward + Backpropagation</h2>
-<p>El entrenamiento es un ciclo de <strong>predecir, medir el error, y corregir</strong>. Como aprender a tirar dardos.</p>
+<p>El entrenamiento es un ciclo de <strong>predecir, medir el error y corregir</strong>. Como aprender a tirar dardos.</p>
 <div class="viz"><canvas id="trainCanvas" width="750" height="280"></canvas>
 <div class="viz-caption" id="trainCap">Forward: la red predice. Error: mide la distancia. Backpropagation: ajusta los pesos hacia atrás.</div></div>
 <div style="text-align:center"><button class="btn" onclick="trainReset()">Reiniciar ciclo</button></div>
@@ -101,7 +103,7 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 ])
 model.compile(optimizer='adam', loss='mse')
 model.fit(X_train, y_train, epochs=50, validation_data=(X_val, y_val))</div>
-<div class="callout tip"><strong>En 5 líneas construimos un cerebro artificial.</strong> La magia no está en el código, sino en entender qué hace cada pieza: Dense (conectar), ReLU (no-linealidad), Adam (aprender), MSE (medir error).</div>
+<div class="callout tip"><strong>En 5 líneas construimos una red neuronal.</strong> La magia no está en el código, sino en entender qué hace cada pieza: Dense (conectar), ReLU (no-linealidad), Adam (aprender), MSE (medir error).</div>
 </div>
 
 <!-- 6. RESULT -->
@@ -110,7 +112,7 @@ model.fit(X_train, y_train, epochs=50, validation_data=(X_val, y_val))</div>
 <p>Después de 50 épocas, la red predice la porosidad NPHI a partir de GR, ILD y RHOB.</p>
 <div class="viz"><canvas id="resultCanvas" width="750" height="300"></canvas>
 <div class="viz-caption">Azul = porosidad real. Naranja = porosidad predicha. Si se solapan, la red aprendió la física.</div></div>
-<div class="callout info"><strong>Lo impresionante:</strong> la red "descubrió" la relación física entre GR, ILD, RHOB y la porosidad — sin que nadie le diera la fórmula petrofísica.</div>
+<div class="callout info"><strong>Lo impresionante:</strong> la red "descubrió" la relación física entre GR, ILD, RHOB y la porosidad, sin que nadie le diera la fórmula petrofísica.</div>
 </div>
 
 </div>
@@ -120,7 +122,7 @@ model.fit(X_train, y_train, epochs=50, validation_data=(X_val, y_val))</div>
 window.addEventListener('scroll',()=>{
 document.getElementById('scroll-progress').style.width=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight)*100)+'%';
 });
-const CC=['#38bdf8','#f59e0b','#22c55e','#ec4899'];
+const CC=['#C0392B','#E67E22','#16A085','#34495E'];
 
 // ═══════════ 1. NEURON ═══════════
 const nc=document.getElementById('neuronCanvas'),ncx=nc.getContext('2d'),nW=nc.width,nH=nc.height;
@@ -134,41 +136,41 @@ let bias=0.1;
 // Draw input nodes
 inputs.forEach((inp,i)=>{
 ncx.fillStyle=CC[i];ncx.beginPath();ncx.arc(130,inp.y,22,0,Math.PI*2);ncx.fill();
-ncx.fillStyle='#0f172a';ncx.font='bold 11px system-ui';ncx.textAlign='center';
+ncx.fillStyle='#ffffff';ncx.font='bold 11px system-ui';ncx.textAlign='center';
 ncx.fillText(inp.name,130,inp.y+4);
-ncx.fillStyle='#94a3b8';ncx.font='10px system-ui';
+ncx.fillStyle='#64748b';ncx.font='10px system-ui';
 ncx.fillText('valor '+inp.val,220,inp.y-10);
 });
 // Draw connections with weight labels
 let z=0;
 inputs.forEach((inp,i)=>{
 let w=weights[i];z+=inp.val*w;
-ncx.strokeStyle=w>=0?'rgba(56,189,248,0.7)':'rgba(239,68,68,0.7)';
+ncx.strokeStyle=w>=0?'#C0392B':'#34495E';
 ncx.lineWidth=Math.abs(w)*2+1;
 ncx.beginPath();ncx.moveTo(152,inp.y);ncx.lineTo(500,160);ncx.stroke();
-ncx.fillStyle='#fff';ncx.font='bold 11px system-ui';
+ncx.fillStyle='#1e293b';ncx.font='bold 11px system-ui';
 ncx.fillText('w='+w.toFixed(1),320,inp.y-12);
 });
 // Draw neuron body
-ncx.fillStyle='#f59e0b';ncx.beginPath();ncx.arc(500,160,40,0,Math.PI*2);ncx.fill();
-ncx.fillStyle='#0f172a';ncx.font='bold 11px system-ui';
+ncx.fillStyle='#E67E22';ncx.beginPath();ncx.arc(500,160,40,0,Math.PI*2);ncx.fill();
+ncx.fillStyle='#ffffff';ncx.font='bold 11px system-ui';
 ncx.fillText('z=Σ',500,156);ncx.fillText('+bias',500,172);
 // Bias input
-ncx.strokeStyle='#a78bfa';ncx.lineWidth=2;
+ncx.strokeStyle='#16A085';ncx.lineWidth=2;
 ncx.beginPath();ncx.moveTo(130,320);ncx.lineTo(500,190);ncx.stroke();
-ncx.fillStyle='#a78bfa';ncx.font='bold 11px system-ui';
+ncx.fillStyle='#16A085';ncx.font='bold 11px system-ui';
 ncx.fillText('bias='+bias.toFixed(1),280,300);
 // Output
 let zfinal=z+bias;
 let relu=Math.max(0,zfinal);
-ncx.strokeStyle='#22c55e';ncx.lineWidth=3;
+ncx.strokeStyle='#34495E';ncx.lineWidth=3;
 ncx.beginPath();ncx.moveTo(540,160);ncx.lineTo(680,160);ncx.stroke();
-ncx.fillStyle='#22c55e';ncx.font='bold 12px system-ui';
+ncx.fillStyle='#34495E';ncx.font='bold 12px system-ui';
 ncx.fillText('ReLU('+zfinal.toFixed(2)+')',690,150);
-ncx.fillStyle='#fff';ncx.font='bold 14px system-ui';
+ncx.fillStyle='#1e293b';ncx.font='bold 14px system-ui';
 ncx.fillText('= '+relu.toFixed(2),690,170);
 // Title
-ncx.fillStyle='#94a3b8';ncx.font='10px system-ui';
+ncx.fillStyle='#64748b';ncx.font='10px system-ui';
 ncx.fillText('Neurona: pondera entradas, suma, aplica activación',nW/2,30);
 }
 window.updateNeuron=function(){document.getElementById('wRhobVal').textContent=parseFloat(document.getElementById('wRhob').value).toFixed(1);drawNeuron();};
@@ -176,7 +178,7 @@ window.updateNeuron=function(){document.getElementById('wRhobVal').textContent=p
 // ═══════════ 2. ACTIVATION ═══════════
 function drawActivation(cv,cx,w,h,fn,color){
 cx.clearRect(0,0,w,h);
-cx.strokeStyle='rgba(100,116,139,0.3)';cx.lineWidth=1;
+cx.strokeStyle='#e2e8f0';cx.lineWidth=1;
 cx.beginPath();cx.moveTo(w/2,10);cx.lineTo(w/2,h-10);cx.stroke();
 cx.beginPath();cx.moveTo(10,h/2);cx.lineTo(w-10,h/2);cx.stroke();
 cx.strokeStyle=color;cx.lineWidth=3;cx.beginPath();
@@ -184,55 +186,53 @@ for(let px=10;px<w-10;px++){let z=(px-w/2)/(w/2)*3;let y=fn(z);let sy=h/2-y*(h/2
 cx.stroke();
 }
 const rc=document.getElementById('reluCanvas'),rx=rc.getContext('2d');
-drawActivation(rc,rx,340,220,z=>Math.max(0,z),'#38bdf8');
+drawActivation(rc,rx,340,220,z=>Math.max(0,z),'#C0392B');
 const lc=document.getElementById('linearCanvas'),lx=lc.getContext('2d');
-drawActivation(lc,lx,340,220,z=>z,'#22c55e');
+drawActivation(lc,lx,340,220,z=>z,'#16A085');
 
 // ═══════════ 3. MLP ═══════════
 const mc=document.getElementById('mlpCanvas'),mcx=mc.getContext('2d');
 function drawMLP(){
 mcx.clearRect(0,0,750,340);
-let layers=[{x:100,n:3,color:'#38bdf8'},{x:330,n:8,color:'#f59e0b'},{x:550,n:5,color:'#22c55e'},{x:720,n:1,color:'#ec4899'}];
+let layers=[{x:100,n:3,color:'#C0392B'},{x:330,n:8,color:'#E67E22'},{x:550,n:5,color:'#16A085'},{x:720,n:1,color:'#34495E'}];
 let nodes=[];
 layers.forEach(L=>{let arr=[];for(let i=0;i<L.n;i++){let y=340/2+(i-(L.n-1)/2)*45;arr.push({x:L.x,y:y,color:L.color});}nodes.push(arr);});
 // Connections
 for(let li=0;li<layers.length-1;li++){
 for(let a of nodes[li])for(let b of nodes[li+1]){
-mcx.strokeStyle='rgba(148,163,184,0.15)';mcx.lineWidth=0.5;
+mcx.strokeStyle='#e2e8f0';mcx.lineWidth=0.5;
 mcx.beginPath();mcx.moveTo(a.x+14,a.y);mcx.lineTo(b.x-14,b.y);mcx.stroke();
 }}
 // Nodes
 nodes.forEach(arr=>arr.forEach(n=>{
 mcx.fillStyle=n.color;mcx.beginPath();mcx.arc(n.x,n.y,14,0,Math.PI*2);mcx.fill();
-mcx.strokeStyle='rgba(255,255,255,0.3)';mcx.lineWidth=1;mcx.beginPath();mcx.arc(n.x,n.y,14,0,Math.PI*2);mcx.stroke();
+mcx.strokeStyle='#ffffff';mcx.lineWidth=1;mcx.beginPath();mcx.arc(n.x,n.y,14,0,Math.PI*2);mcx.stroke();
 }));
-mcx.fillStyle='#94a3b8';mcx.font='10px system-ui';
+mcx.fillStyle='#64748b';mcx.font='10px system-ui';
 mcx.fillText('Entrada (3)',80,335);mcx.fillText('Oculta 1 (64)',300,335);mcx.fillText('Oculta 2 (32)',525,335);mcx.fillText('Salida (1)',700,335);
-mcx.fillStyle='#64748b';mcx.font='9px system-ui';
+mcx.fillStyle='#334155';mcx.font='9px system-ui';
 mcx.fillText('GR, ILD, RHOB',80,18);mcx.fillText('Porosidad NPHI',700,18);
 }
 
 // ═══════════ 4. TRAINING CYCLE ═══════════
 const tc=document.getElementById('trainCanvas'),tcx=tc.getContext('2d'),tW=tc.width,tH=tc.height;
-let trainPhase=0,errorVal=1.0;
+let trainPhase=0;
 function drawTrain(){
 tcx.clearRect(0,0,tW,tH);
-// Error decreasing as phases progress
 let err=trainPhase===0?1.0:trainPhase===1?0.6:0.2;
-// Draw "dart board" analogy: target + dart position based on error
 let cx=tW/2,cy=tH/2;
 let offset=err*80;
 // Target
-tcx.strokeStyle='#ef4444';tcx.lineWidth=3;
+tcx.strokeStyle='#C0392B';tcx.lineWidth=3;
 tcx.beginPath();tcx.arc(cx,cy,10,0,Math.PI*2);tcx.stroke();
 tcx.beginPath();tcx.arc(cx,cy,25,0,Math.PI*2);tcx.stroke();
 tcx.beginPath();tcx.arc(cx,cy,45,0,Math.PI*2);tcx.stroke();
 // Dart
-tcx.fillStyle='#38bdf8';tcx.beginPath();tcx.arc(cx+offset,cy-offset,6,0,Math.PI*2);tcx.fill();
+tcx.fillStyle='#34495E';tcx.beginPath();tcx.arc(cx+offset,cy-offset,6,0,Math.PI*2);tcx.fill();
 // Labels
-tcx.fillStyle='#94a3b8';tcx.font='11px system-ui';tcx.textAlign='center';
+tcx.fillStyle='#1e293b';tcx.font='12px system-ui';tcx.textAlign='center';
 tcx.fillText(trainPhase===0?'1. FORWARD: la red predice (lanza el dardo)':trainPhase===1?'2. ERROR: mide qué tan lejos quedó':'3. BACKPROPAGATION: ajusta pesos para acertar mejor',cx,40);
-tcx.fillText('Error: '+err.toFixed(1)+'  →  '+(trainPhase===2?'(bajando en cada ciclo)':''),cx,tH-20);
+tcx.fillText('Error: '+err.toFixed(1)+(trainPhase===2?' (bajando en cada ciclo)':''),cx,tH-20);
 }
 setInterval(()=>{trainPhase=(trainPhase+1)%3;drawTrain();},1800);
 window.trainReset=function(){trainPhase=0;drawTrain();};
@@ -243,21 +243,20 @@ function drawResult(){
 resx.clearRect(0,0,750,300);
 let pad={l:50,r:20,t:20,b:40},pw=750-pad.l-pad.r,ph=300-pad.t-pad.b;
 resx.fillStyle='#64748b';resx.font='10px system-ui';
-resx.fillText('Profundidad (m) →',360,290);
-resx.save();resx.translate(12,150);resx.rotate(-Math.PI/2);resx.fillText('Porosidad NPHI →',0,0);resx.restore();
-// Synthetic data: real and predicted overlapping
+resx.fillText('Profundidad (m)',360,290);
+resx.save();resx.translate(12,150);resx.rotate(-Math.PI/2);resx.fillText('Porosidad NPHI',0,0);resx.restore();
 let s=7;function r(){s=(s*16807)%2147483647;return(s-1)/2147483646;}
 for(let i=0;i<400;i++){
 let depth=1500+(i/400)*700;
 let real=0.18+Math.sin(i*0.05)*0.06+(r()-.5)*0.04;
-let pred=real+(r()-.5)*0.02; // predicted closely follows real
+let pred=real+(r()-.5)*0.02;
 let sx=pad.l+(i/400)*pw, sy=pad.t+ph-(real/0.5)*ph;
-resx.fillStyle='rgba(56,189,248,0.5)';resx.beginPath();resx.arc(sx,sy,2,0,Math.PI*2);resx.fill();
+resx.fillStyle='rgba(192,57,43,0.55)';resx.beginPath();resx.arc(sx,sy,2,0,Math.PI*2);resx.fill();
 let sy2=pad.t+ph-(pred/0.5)*ph;
-resx.fillStyle='rgba(245,158,11,0.5)';resx.beginPath();resx.arc(sx,sy2,2,0,Math.PI*2);resx.fill();
+resx.fillStyle='rgba(230,126,34,0.55)';resx.beginPath();resx.arc(sx,sy2,2,0,Math.PI*2);resx.fill();
 }
-resx.fillStyle='#38bdf8';resx.font='11px system-ui';resx.fillText('● Real',60,40);
-resx.fillStyle='#f59e0b';resx.fillText('● Predicha',120,40);
+resx.fillStyle='#C0392B';resx.font='11px system-ui';resx.fillText('Real',60,40);
+resx.fillStyle='#E67E22';resx.fillText('Predicha',120,40);
 }
 
 // ═══════════ INIT ═══════════
