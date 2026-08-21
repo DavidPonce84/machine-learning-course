@@ -149,11 +149,11 @@ ocx.fillText('Época',oW/2-20,oH-8);
 ocx.save();ocx.translate(14,oH/2+10);ocx.rotate(-Math.PI/2);ocx.fillText('MSE',0,0);ocx.restore();
 // Training loss
 ocx.strokeStyle='#34495E';ocx.lineWidth=2.5;ocx.beginPath();
-for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*lossTrain(i);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(1-lossTrain(i));i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
 ocx.stroke();
 // Validation loss
 ocx.strokeStyle='#C0392B';ocx.lineWidth=2.5;ocx.beginPath();
-for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*lossVal(i);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(1-lossVal(i));i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
 ocx.stroke();
 // Separation point (only visible after epoch 40)
 if(maxEpoch>=40){
@@ -222,7 +222,7 @@ ecx.fillText('Época',375,328);
 ecx.save();ecx.translate(14,170);ecx.rotate(-Math.PI/2);ecx.fillText('MSE',0,0);ecx.restore();
 // Validation loss decreasing and flattening (no overfitting)
 ecx.strokeStyle='#34495E';ecx.lineWidth=2.5;ecx.beginPath();
-for(let i=0;i<70;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.16);i===0?ecx.moveTo(x,y):ecx.lineTo(x,y);}
+for(let i=0;i<70;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(1-(0.9-Math.log(i+1)*0.16));i===0?ecx.moveTo(x,y):ecx.lineTo(x,y);}
 ecx.stroke();
 // Stop line
 let sx=pad.l+(55/99)*pw;
@@ -240,12 +240,12 @@ let pad={l:35,r:10,t:15,b:25},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
 cx.strokeStyle='#e2e8f0';cx.lineWidth=.5;
 for(let i=0;i<=3;i++){let y=pad.t+ph/3*i;cx.beginPath();cx.moveTo(pad.l,y);cx.lineTo(w-pad.r,y);cx.stroke();}
 cx.strokeStyle='#34495E';cx.lineWidth=2;cx.beginPath();
-for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.14);i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
+for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(1-(0.9-Math.log(i+1)*0.14));i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
 cx.stroke();
 cx.strokeStyle=overfit?'#C0392B':'#16A085';cx.lineWidth=2;cx.beginPath();
 for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw;let y;
-if(overfit){if(i<40)y=pad.t+ph*(0.85-Math.log(i+1)*0.13);else y=pad.t+ph*(0.85-Math.log(41)*0.13+(i-40)*0.006);}
-else y=pad.t+ph*(0.85-Math.log(i+1)*0.13);
+if(overfit){if(i<40)y=pad.t+ph*(1-(0.85-Math.log(i+1)*0.13));else y=pad.t+ph*(1-(0.85-Math.log(41)*0.13+(i-40)*0.006));}
+else y=pad.t+ph*(1-(0.85-Math.log(i+1)*0.13));
 i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
 cx.stroke();
 }
