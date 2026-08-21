@@ -3,39 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🚨 Overfitting y Regularización | Módulo 6 Día 2 · SLB</title>
+<title>Overfitting y Regularización | Módulo 6 Día 2 · UDLA</title>
 <style>
-:root{--bg:#0f172a;--card:#1e293b;--accent:#38bdf8;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--pink:#ec4899;--text:#f8fafc;--muted:#94a3b8;--border:#334155}
+:root{--bg:#f8fafc;--card:#ffffff;--accent:#C0392B;--accent2:#E67E22;--green:#16A085;--slate:#34495E;--text:#1e293b;--muted:#64748b;--border:#e2e8f0}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
 .container{max-width:920px;margin:0 auto;padding:2rem 1.5rem}
 .hero{text-align:center;padding:4rem 0 2rem}
-.hero h1{font-size:2.4rem;background:linear-gradient(135deg,var(--red),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.hero h1{font-size:2.4rem;color:var(--accent);margin-bottom:.5rem}
 .hero .sub{color:var(--muted);font-size:1.1rem}
 .hero .badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:2rem;padding:.4rem 1.2rem;margin-top:1rem;font-size:.9rem;color:var(--accent)}
-.section{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:2rem;margin:2rem 0}
+.section{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:2rem;margin:2rem 0;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
 .section h2{color:var(--accent);font-size:1.5rem;margin-bottom:1rem}
-.section h3{color:var(--gold);font-size:1.1rem;margin:1.2rem 0 .5rem}
-.section p{margin-bottom:.8rem;color:#cbd5e1}
-.callout{border-radius:.8rem;padding:1.2rem;margin:1rem 0;font-size:.95rem}
-.callout.info{background:rgba(56,189,248,0.1);border-left:3px solid var(--accent)}
-.callout.warn{background:rgba(245,158,11,0.1);border-left:3px solid var(--gold)}
-.callout.tip{background:rgba(34,197,94,0.1);border-left:3px solid var(--green)}
-.viz{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;margin:1rem 0;text-align:center;overflow:hidden}
+.section h3{color:var(--accent2);font-size:1.1rem;margin:1.2rem 0 .5rem}
+.section p{margin-bottom:.8rem;color:#334155}
+.callout{border-radius:.6rem;padding:1.1rem;margin:1rem 0;font-size:.95rem}
+.callout.info{background:#fdf2f2;border-left:3px solid var(--accent)}
+.callout.warn{background:#fef8ee;border-left:3px solid var(--accent2)}
+.callout.tip{background:#eef7f5;border-left:3px solid var(--green)}
+.viz{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;margin:1rem 0;text-align:center;overflow:hidden}
 .viz canvas{display:block;margin:0 auto}
 .viz-caption{padding:.6rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border)}
 .slider-group{margin:1rem 0}
 .slider-group label{display:block;color:var(--muted);font-size:.85rem}
-.slider-group input[type=range]{width:100%;accent-color:var(--red)}
-.code-block{background:#0f172a;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
+.slider-group input[type=range]{width:100%;accent-color:var(--accent)}
+.code-block{background:#1e293b;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem;margin:.8rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#e2e8f0;line-height:1.8;white-space:pre}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0}
 @media(max-width:700px){.grid-2{grid-template-columns:1fr}}
-.grid-card{background:#0f172a;border:1px solid var(--border);border-radius:.8rem;padding:1.2rem}
-.grid-card h4{color:var(--gold);margin-bottom:.5rem}
-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
-th{background:rgba(56,189,248,0.15);color:var(--accent);padding:.6rem;text-align:left;border-bottom:2px solid var(--border)}
-td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
-#scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--red);z-index:100}
+.grid-card{background:#ffffff;border:1px solid var(--border);border-radius:.6rem;padding:1.2rem}
+.grid-card h4{color:var(--accent);margin-bottom:.5rem}
+.btn{background:var(--accent);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:.4rem;font-weight:600;cursor:pointer;font-size:.9rem;margin:.3rem}
+.btn:hover{opacity:.9}
+#scroll-progress{position:fixed;top:0;left:0;height:3px;background:var(--accent);z-index:100}
 </style>
 </head>
 <body>
@@ -43,30 +42,33 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <div class="container">
 
 <div class="hero">
-<h1>🚨 Overfitting: Memorizar vs Aprender</h1>
+<h1>Overfitting: Memorizar vs Aprender</h1>
 <p class="sub">Cómo detectarlo y combatirlo con Dropout y Early Stopping</p>
-<span class="badge">Módulo 6 Día 2 — Schlumberger (SLB) · Instructor: David Ponce</span>
+<span class="badge">Módulo 6 Día 2 — UDLA · Instructor: David Ponce</span>
 </div>
 
 <!-- 1. OVERFITTING ANALOGY -->
 <div class="section" id="s1">
 <h2>1. Overfitting: El Estudiante que Memoriza</h2>
 <div class="grid-2">
-<div class="grid-card"><h4>📚 Estudiante A (APRENDE)</h4>
+<div class="grid-card"><h4 style="color:var(--green)">Estudiante A (APRENDE)</h4>
 <p>Entiende los conceptos. Aprueba el examen Y el siguiente tema. Generaliza.</p></div>
-<div class="grid-card"><h4>🦜 Estudiante B (MEMORIZA)</h4>
+<div class="grid-card"><h4 style="color:var(--accent)">Estudiante B (MEMORIZA)</h4>
 <p>Memoriza las respuestas exactas. Aprueba EL MISMO examen, pero falla con preguntas nuevas.</p></div>
 </div>
 <p>Una red neuronal con <strong>demasiadas neuronas y épocas</strong> es el Estudiante B: memoriza el ruido de los datos de entrenamiento y falla con datos nuevos.</p>
 <div class="callout warn"><strong>Overfitting = excelente en entrenamiento, pésimo en datos nuevos.</strong></div>
 </div>
 
-<!-- 2. LOSS CURVES -->
+<!-- 2. LOSS CURVES (ANIMATED) -->
 <div class="section" id="s2">
 <h2>2. La Firma: Las Curvas se Separan</h2>
 <p>La señal clásica de overfitting: la pérdida de entrenamiento sigue bajando, pero la de validación empieza a SUBIR.</p>
 <div class="viz"><canvas id="overfitCanvas" width="750" height="340"></canvas>
 <div class="viz-caption">Azul = entrenamiento (sigue memorizando). Rojo = validación (ya no generaliza). El punto donde se separan = overfitting.</div></div>
+<div style="text-align:center">
+<button class="btn" onclick="resetAnim()">Reiniciar animación</button>
+</div>
 <div class="callout info"><strong>Observa:</strong> Antes del punto de separación, la red aprende. Después, memoriza. El objetivo es entrenar solo hasta antes de ese punto.</div>
 </div>
 
@@ -77,7 +79,7 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <div class="viz"><canvas id="dropoutCanvas" width="750" height="300"></canvas>
 <div class="viz-caption">Las neuronas grises (con X) están apagadas en este paso. En el siguiente paso, se apagan otras diferentes.</div></div>
 <div class="slider-group">
-<label>Probabilidad de Dropout: <span id="dropVal" style="color:var(--gold)">20%</span></label>
+<label>Probabilidad de Dropout: <span id="dropVal" style="color:var(--accent)">20%</span></label>
 <input type="range" min="0" max="60" value="20" id="dropSlider" oninput="updateDropout()">
 </div>
 <div class="callout tip"><strong>Analogía del fútbol:</strong> vendas los ojos al 20% del equipo en cada práctica. Todos desarrollan habilidades independientes en vez de depender de la estrella.</div>
@@ -88,7 +90,7 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <h2>4. Solución 2: Early Stopping — Saber Cuándo Parar</h2>
 <p>Early Stopping monitorea la pérdida de validación. Si deja de mejorar por N épocas, detiene el entrenamiento automáticamente.</p>
 <div class="viz"><canvas id="earlyCanvas" width="750" height="340"></canvas>
-<div class="viz-caption">La línea vertical roja = donde Early Stopping detuvo el entrenamiento. Antes de que la validación suba.</div></div>
+<div class="viz-caption">La línea vertical verde = donde Early Stopping detuvo el entrenamiento, antes de que la validación suba.</div></div>
 <div class="callout info"><strong>Analogía del maratón:</strong> llega un punto donde seguir entrenando te LASTIMA. Early Stopping es el entrenador que dice "ya es suficiente".</div>
 </div>
 
@@ -96,9 +98,9 @@ td{padding:.6rem;border-bottom:1px solid var(--border);color:#cbd5e1}
 <div class="section" id="s5">
 <h2>5. Antes vs Después</h2>
 <div class="grid-2">
-<div class="grid-card"><h4 style="color:var(--red)">Sin Regularización</h4>
+<div class="grid-card"><h4 style="color:var(--accent)">Sin Regularización</h4>
 <div class="viz"><canvas id="noRegCanvas" width="340" height="220"></canvas></div>
-<p style="font-size:.85rem;color:var(--red)">Entrenamiento cae a cero, validación sube. Memorizó.</p></div>
+<p style="font-size:.85rem;color:var(--accent)">Entrenamiento cae a cero, validación sube. Memorizó.</p></div>
 <div class="grid-card"><h4 style="color:var(--green)">Con Dropout + Early Stopping</h4>
 <div class="viz"><canvas id="regCanvas" width="340" height="220"></canvas></div>
 <p style="font-size:.85rem;color:var(--green)">Ambas bajan y se estabilizan. Aprendió.</p></div>
@@ -129,36 +131,59 @@ window.addEventListener('scroll',()=>{
 document.getElementById('scroll-progress').style.width=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight)*100)+'%';
 });
 
-// ═══════════ 2. OVERFIT CURVES ═══════════
+// ═══════════ 2. OVERFIT CURVES (ANIMATED) ═══════════
 const oc=document.getElementById('overfitCanvas'),ocx=oc.getContext('2d'),oW=oc.width,oH=oc.height;
-function drawOverfit(){
+let animEpoch=0,animRunning=true;
+
+function lossTrain(i){return 0.9-Math.log(i+1)*0.14;}
+function lossVal(i){if(i<40)return 0.85-Math.log(i+1)*0.13;else return 0.85-Math.log(41)*0.13+(i-40)*0.006;}
+
+function drawOverfit(maxEpoch){
 ocx.clearRect(0,0,oW,oH);
 let pad={l:60,r:20,t:30,b:40},pw=oW-pad.l-pad.r,ph=oH-pad.t-pad.b;
-ocx.strokeStyle='rgba(100,116,139,0.1)';ocx.lineWidth=.5;
+// grid
+ocx.strokeStyle='#e2e8f0';ocx.lineWidth=.5;
 for(let i=0;i<=5;i++){let y=pad.t+ph/5*i;ocx.beginPath();ocx.moveTo(pad.l,y);ocx.lineTo(oW-pad.r,y);ocx.stroke();}
-ocx.fillStyle='#94a3b8';ocx.font='11px system-ui';
-ocx.fillText('Época →',oW/2-30,oH-6);
-ocx.save();ocx.translate(12,oH/2+20);ocx.rotate(-Math.PI/2);ocx.fillText('MSE →',0,0);ocx.restore();
-// Training loss: keeps decreasing
-ocx.strokeStyle='#38bdf8';ocx.lineWidth=2.5;ocx.beginPath();
-for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.14);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+ocx.fillStyle='#64748b';ocx.font='11px system-ui';
+ocx.fillText('Época',oW/2-20,oH-8);
+ocx.save();ocx.translate(14,oH/2+10);ocx.rotate(-Math.PI/2);ocx.fillText('MSE',0,0);ocx.restore();
+// Training loss
+ocx.strokeStyle='#34495E';ocx.lineWidth=2.5;ocx.beginPath();
+for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*lossTrain(i);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
 ocx.stroke();
-// Validation loss: decreases then increases
-ocx.strokeStyle='#ef4444';ocx.lineWidth=2.5;ocx.beginPath();
-for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw;let y;
-if(i<40)y=pad.t+ph*(0.85-Math.log(i+1)*0.13);
-else y=pad.t+ph*(0.85-Math.log(41)*0.13+(i-40)*0.006);
-i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
+// Validation loss
+ocx.strokeStyle='#C0392B';ocx.lineWidth=2.5;ocx.beginPath();
+for(let i=0;i<=maxEpoch;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*lossVal(i);i===0?ocx.moveTo(x,y):ocx.lineTo(x,y);}
 ocx.stroke();
-// Separation point
+// Separation point (only visible after epoch 40)
+if(maxEpoch>=40){
 let sx=pad.l+(40/99)*pw;
-ocx.strokeStyle='rgba(245,158,11,0.8)';ocx.lineWidth=2;ocx.setLineDash([6,4]);
+ocx.strokeStyle='#E67E22';ocx.lineWidth=2;ocx.setLineDash([6,4]);
 ocx.beginPath();ocx.moveTo(sx,pad.t);ocx.lineTo(sx,pad.t+ph);ocx.stroke();ocx.setLineDash([]);
-ocx.fillStyle='#f59e0b';ocx.font='bold 11px system-ui';
-ocx.fillText('← OVERFITTING',sx+6,pad.t+20);
-ocx.fillStyle='#38bdf8';ocx.fillText('● Entrenamiento',pad.l+20,pad.t+15);
-ocx.fillStyle='#ef4444';ocx.fillText('● Validación',pad.l+120,pad.t+15);
+ocx.fillStyle='#E67E22';ocx.font='bold 11px system-ui';
+ocx.fillText('OVERFITTING',sx+6,pad.t+20);
 }
+// Moving epoch marker
+if(maxEpoch>0&&maxEpoch<99){
+let mx=pad.l+(maxEpoch/99)*pw;
+ocx.strokeStyle='#64748b';ocx.lineWidth=1;
+ocx.beginPath();ocx.moveTo(mx,pad.t);ocx.lineTo(mx,pad.t+ph);ocx.stroke();
+}
+// Legend
+ocx.fillStyle='#34495E';ocx.fillText('Entrenamiento',pad.l+20,pad.t+15);
+ocx.fillStyle='#C0392B';ocx.fillText('Validación',pad.l+130,pad.t+15);
+ocx.fillStyle='#64748b';ocx.font='12px system-ui';
+ocx.fillText('Época '+maxEpoch+' / 100',oW-pad.r-90,pad.t+15);
+}
+
+function animLoop(){
+if(!animRunning)return;
+animEpoch++;
+if(animEpoch>100){animEpoch=0;}
+drawOverfit(animEpoch);
+setTimeout(animLoop,60);
+}
+window.resetAnim=function(){animEpoch=0;drawOverfit(0);};
 
 // ═══════════ 3. DROPOUT ═══════════
 const dc=document.getElementById('dropoutCanvas'),dcx=dc.getContext('2d');
@@ -168,17 +193,20 @@ let neurons=[];
 for(let r=0;r<4;r++){let row=[];for(let i=0;i<10;i++){row.push({x:120+r*180,y:30+i*26,off:Math.random()<rate});}neurons.push(row);}
 // Connections
 for(let r=0;r<3;r++)for(let a of neurons[r])for(let b of neurons[r+1]){
-dcx.strokeStyle=a.off||b.off?'rgba(148,163,184,0.05)':'rgba(148,163,184,0.2)';
+dcx.strokeStyle=a.off||b.off?'#f1f5f9':'#e2e8f0';
 dcx.lineWidth=.5;dcx.beginPath();dcx.moveTo(a.x+10,a.y);dcx.lineTo(b.x-10,b.y);dcx.stroke();
 }
 neurons.forEach(row=>row.forEach(n=>{
-dcx.fillStyle=n.off?'#334155':'#38bdf8';
+dcx.fillStyle=n.off?'#cbd5e1':'#C0392B';
 dcx.beginPath();dcx.arc(n.x,n.y,9,0,Math.PI*2);dcx.fill();
-if(n.off){dcx.strokeStyle='#ef4444';dcx.lineWidth=2;dcx.beginPath();dcx.moveTo(n.x-4,n.y-4);dcx.lineTo(n.x+4,n.y+4);dcx.moveTo(n.x+4,n.y-4);dcx.lineTo(n.x-4,n.y+4);dcx.stroke();}
+dcx.strokeStyle='#ffffff';dcx.lineWidth=1;dcx.beginPath();dcx.arc(n.x,n.y,9,0,Math.PI*2);dcx.stroke();
+if(n.off){dcx.strokeStyle='#C0392B';dcx.lineWidth=2;dcx.beginPath();dcx.moveTo(n.x-4,n.y-4);dcx.lineTo(n.x+4,n.y+4);dcx.moveTo(n.x+4,n.y-4);dcx.lineTo(n.x-4,n.y+4);dcx.stroke();}
 }));
 let offCount=neurons.flat().filter(n=>n.off).length;
-dcx.fillStyle='#94a3b8';dcx.font='11px system-ui';
+dcx.fillStyle='#64748b';dcx.font='11px system-ui';
 dcx.fillText('Neuronas apagadas en este paso: '+offCount+' / '+neurons.flat().length,270,20);
+dcx.fillStyle='#C0392B';dcx.fillText('Activa',110,15);
+dcx.fillStyle='#cbd5e1';dcx.fillText('Apagada',150,15);
 }
 window.updateDropout=function(){let r=parseInt(document.getElementById('dropSlider').value)/100;document.getElementById('dropVal').textContent=Math.round(r*100)+'%';drawDropout(r);};
 
@@ -187,34 +215,34 @@ const ec=document.getElementById('earlyCanvas'),ecx=ec.getContext('2d');
 function drawEarly(){
 ecx.clearRect(0,0,750,340);
 let pad={l:60,r:20,t:30,b:40},pw=750-pad.l-pad.r,ph=340-pad.t-pad.b;
-ecx.strokeStyle='rgba(100,116,139,0.1)';ecx.lineWidth=.5;
+ecx.strokeStyle='#e2e8f0';ecx.lineWidth=.5;
 for(let i=0;i<=5;i++){let y=pad.t+ph/5*i;ecx.beginPath();ecx.moveTo(pad.l,y);ecx.lineTo(750-pad.r,y);ecx.stroke();}
-ecx.fillStyle='#94a3b8';ecx.font='11px system-ui';
-ecx.fillText('Época →',375,330);
-ecx.save();ecx.translate(12,170);ecx.rotate(-Math.PI/2);ecx.fillText('MSE →',0,0);ecx.restore();
-// Loss decreasing and flattening
-ecx.strokeStyle='#38bdf8';ecx.lineWidth=2.5;ecx.beginPath();
+ecx.fillStyle='#64748b';ecx.font='11px system-ui';
+ecx.fillText('Época',375,328);
+ecx.save();ecx.translate(14,170);ecx.rotate(-Math.PI/2);ecx.fillText('MSE',0,0);ecx.restore();
+// Validation loss decreasing and flattening (no overfitting)
+ecx.strokeStyle='#34495E';ecx.lineWidth=2.5;ecx.beginPath();
 for(let i=0;i<70;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.16);i===0?ecx.moveTo(x,y):ecx.lineTo(x,y);}
 ecx.stroke();
 // Stop line
 let sx=pad.l+(55/99)*pw;
-ecx.strokeStyle='#22c55e';ecx.lineWidth=3;
+ecx.strokeStyle='#16A085';ecx.lineWidth=3;
 ecx.beginPath();ecx.moveTo(sx,pad.t);ecx.lineTo(sx,pad.t+ph);ecx.stroke();
-ecx.fillStyle='#22c55e';ecx.font='bold 12px system-ui';
+ecx.fillStyle='#16A085';ecx.font='bold 12px system-ui';
 ecx.fillText('EARLY STOPPING (época ~55)',sx+6,pad.t+20);
-ecx.fillStyle='#94a3b8';ecx.fillText('La pérdida ya no mejora → detener aquí',sx+6,pad.t+40);
+ecx.fillStyle='#64748b';ecx.fillText('La pérdida ya no mejora: detener aquí',sx+6,pad.t+40);
 }
 
 // ═══════════ 5. COMPARISON ═══════════
 function drawMini(cv,cx,w,h,overfit){
 cx.clearRect(0,0,w,h);
 let pad={l:35,r:10,t:15,b:25},pw=w-pad.l-pad.r,ph=h-pad.t-pad.b;
-cx.strokeStyle='rgba(100,116,139,0.1)';cx.lineWidth=.5;
+cx.strokeStyle='#e2e8f0';cx.lineWidth=.5;
 for(let i=0;i<=3;i++){let y=pad.t+ph/3*i;cx.beginPath();cx.moveTo(pad.l,y);cx.lineTo(w-pad.r,y);cx.stroke();}
-cx.strokeStyle='#38bdf8';cx.lineWidth=2;cx.beginPath();
+cx.strokeStyle='#34495E';cx.lineWidth=2;cx.beginPath();
 for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw,y=pad.t+ph*(0.9-Math.log(i+1)*0.14);i===0?cx.moveTo(x,y):cx.lineTo(x,y);}
 cx.stroke();
-cx.strokeStyle=overfit?'#ef4444':'#22c55e';cx.lineWidth=2;cx.beginPath();
+cx.strokeStyle=overfit?'#C0392B':'#16A085';cx.lineWidth=2;cx.beginPath();
 for(let i=0;i<100;i++){let x=pad.l+(i/99)*pw;let y;
 if(overfit){if(i<40)y=pad.t+ph*(0.85-Math.log(i+1)*0.13);else y=pad.t+ph*(0.85-Math.log(41)*0.13+(i-40)*0.006);}
 else y=pad.t+ph*(0.85-Math.log(i+1)*0.13);
@@ -227,7 +255,8 @@ const rgc=document.getElementById('regCanvas'),rgx=rgc.getContext('2d');
 drawMini(rgc,rgx,340,220,false);
 
 // ═══════════ INIT ═══════════
-drawOverfit();drawDropout(0.2);drawEarly();
+drawOverfit(0);drawDropout(0.2);drawEarly();
+animLoop();
 })();
 </script>
 </body>
